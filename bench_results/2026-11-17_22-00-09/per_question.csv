@@ -1,0 +1,309 @@
+dataset,kind,question,expected,predicted,correct,answer_text,clean_answer,thinking_text,truncated,no_answer_only_thinking,retried,retry_wasted_s,answer_from_reasoning,options,must_have,nice_to_have,done_reason,wall_s,prompt_tokens,output_tokens,prompt_s,gen_s,load_s
+medquad,open,Is D-bifunctional protein deficiency inherited ?,,,,"Yes, D-bifunctional protein deficiency is inherited. It is a rare genetic disorder caused by mutations in the *DMBT1* gene. These mutations lead to a deficiency or absence of the D-bifunctional protein, which is important for the development and function of the brain and other tissues.","Yes, D-bifunctional protein deficiency is inherited. It is a rare genetic disorder caused by mutations in the *DMBT1* gene. These mutations lead to a deficiency or absence of the D-bifunctional protein, which is important for the development and function of the brain and other tissues.",,False,False,False,0.0,False,,,,stop,8.074047299975064,158,63,0.302041,5.63555,0.0159362
+medquad,open,What is (are) Tourette syndrome ?,,,,"Tourette syndrome is a neurological disorder that causes repetitive, involuntary movements and vocalizations called tics. These tics can include sudden twitches, throat clearing, sniffing, or repeating words. Tourette syndrome is a chronic condition, meaning it usually lasts a lifetime. It often starts in childhood, typically between the ages of 2 and 15. While it can be challenging, many people with Tourette syndrome can manage their symptoms effectively with medication, therapy, and support.
+If you are experiencing symptoms that could be related to Tourette syndrome, or if you have any other health concerns, it is important to consult with a doctor for an accurate diagnosis and appropriate treatment plan.","Tourette syndrome is a neurological disorder that causes repetitive, involuntary movements and vocalizations called tics. These tics can include sudden twitches, throat clearing, sniffing, or repeating words. Tourette syndrome is a chronic condition, meaning it usually lasts a lifetime. It often starts in childhood, typically between the ages of 2 and 15. While it can be challenging, many people with Tourette syndrome can manage their symptoms effectively with medication, therapy, and support.
+If you are experiencing symptoms that could be related to Tourette syndrome, or if you have any other health concerns, it is important to consult with a doctor for an accurate diagnosis and appropriate treatment plan.",,False,False,False,0.0,False,,,,stop,17.9688786000479,157,138,3.41216,12.411433,0.0437148
+medquad,open,What is (are) Compulsive Gambling ?,,,,"Compulsive gambling, also known as gambling addiction or pathological gambling, is an uncontrollable urge to gamble, often despite negative consequences. It's considered an impulse control disorder. People with compulsive gambling often feel unable to stop gambling even when they want to, and it can interfere significantly with their daily lives, including work, school, relationships, and finances. It's not just about losing money; it's about the behavior itself becoming the primary focus and causing harm.
+If you or someone you know is struggling with compulsive gambling, it's important to seek professional help. You can contact a helpline or mental health professional for support and treatment options.","Compulsive gambling, also known as gambling addiction or pathological gambling, is an uncontrollable urge to gamble, often despite negative consequences. It's considered an impulse control disorder. People with compulsive gambling often feel unable to stop gambling even when they want to, and it can interfere significantly with their daily lives, including work, school, relationships, and finances. It's not just about losing money; it's about the behavior itself becoming the primary focus and causing harm.
+If you or someone you know is struggling with compulsive gambling, it's important to seek professional help. You can contact a helpline or mental health professional for support and treatment options.",,False,False,False,0.0,False,,,,stop,17.4646730000386,157,132,3.382858,11.982167,0.0141057
+medquad,open,Who is at risk for Pancreatic Neuroendocrine Tumors (Islet Cell Tumors)? ?,,,,"Pancreatic Neuroendocrine Tumors (PNETs), also known as Islet Cell Tumors, can occur in anyone, but certain factors increase the risk. These include:
+
+*   **Family History:** Having a close relative (parent, sibling, child) with a PNET increases your risk.
+*   **Certain Genetic Syndromes:** Conditions like Multiple Endocrine Neoplasia (MEN) types 1 and 2, Von Hippel-Lindau (VHL) disease, and Neurofibromatosis type 1 (NF1) are associated with an increased risk of PNETs.
+*   **Age:** While they can occur at any age, they are more common in older adults, particularly those over 60.
+*   **Race:** PNETs are more common in people of African descent.
+*   **Chronic Pancreatitis:** Long-term inflammation of the pancreas can increase the risk.
+*   **Diabetes:** People with diabetes, especially type 2, may have a slightly higher risk.
+*   **Exposure to Certain Chemicals:** Some studies suggest a possible link between exposure to certain chemicals and an increased risk, but more research is needed.
+
+If you have any concerns about your risk for PNETs, it's best to discuss them with your doctor. They can provide personalized advice based on your individual health history and risk factors.","Pancreatic Neuroendocrine Tumors (PNETs), also known as Islet Cell Tumors, can occur in anyone, but certain factors increase the risk. These include:
+
+*   **Family History:** Having a close relative (parent, sibling, child) with a PNET increases your risk.
+*   **Certain Genetic Syndromes:** Conditions like Multiple Endocrine Neoplasia (MEN) types 1 and 2, Von Hippel-Lindau (VHL) disease, and Neurofibromatosis type 1 (NF1) are associated with an increased risk of PNETs.
+*   **Age:** While they can occur at any age, they are more common in older adults, particularly those over 60.
+*   **Race:** PNETs are more common in people of African descent.
+*   **Chronic Pancreatitis:** Long-term inflammation of the pancreas can increase the risk.
+*   **Diabetes:** People with diabetes, especially type 2, may have a slightly higher risk.
+*   **Exposure to Certain Chemicals:** Some studies suggest a possible link between exposure to certain chemicals and an increased risk, but more research is needed.
+
+If you have any concerns about your risk for PNETs, it's best to discuss them with your doctor. They can provide personalized advice based on your individual health history and risk factors.",,False,False,False,0.0,False,,,,stop,32.028591299953405,167,285,3.642142,26.203113,0.0437689
+medquad,open,How to prevent Medullary Sponge Kidney ?,,,,"Medullary Sponge Kidney is a condition where the kidney's filtering units (nephrons) have small cysts in the medulla (the inner part of the kidney). It's generally considered a benign (non-cancerous) condition, but it can sometimes lead to complications. There is no known way to completely prevent Medullary Sponge Kidney, as it's often linked to genetic factors. However, you can take steps to manage symptoms and potentially reduce the risk of complications:
+
+1.  **Stay Hydrated:** Drinking plenty of water helps flush your kidneys and can potentially reduce the amount of calcium deposits that can form in the cysts.
+2.  **Manage Blood Pressure:** High blood pressure can increase the risk of kidney stones and other complications. Keeping your blood pressure under control is important.
+3.  **Manage Kidney Stones:** If you develop kidney stones, which can be more common in people with Medullary Sponge Kidney, follow your doctor's advice for prevention and treatment.
+4.  **Avoid Certain Medications:** Some medications, like certain NSAIDs (nonsteroidal anti-inflammatory drugs) used for pain or inflammation, can potentially affect kidney function. Discuss this with your doctor before taking any new medications.
+5.  **Maintain a Healthy Diet:** A balanced diet rich in fruits and vegetables can be beneficial for overall kidney health.
+
+It's important to work closely with your doctor to monitor your kidney function and manage any symptoms or complications that may arise. If you have Medullary Sponge Kidney, they may recommend regular check-ups and specific tests.","Medullary Sponge Kidney is a condition where the kidney's filtering units (nephrons) have small cysts in the medulla (the inner part of the kidney). It's generally considered a benign (non-cancerous) condition, but it can sometimes lead to complications. There is no known way to completely prevent Medullary Sponge Kidney, as it's often linked to genetic factors. However, you can take steps to manage symptoms and potentially reduce the risk of complications:
+
+1.  **Stay Hydrated:** Drinking plenty of water helps flush your kidneys and can potentially reduce the amount of calcium deposits that can form in the cysts.
+2.  **Manage Blood Pressure:** High blood pressure can increase the risk of kidney stones and other complications. Keeping your blood pressure under control is important.
+3.  **Manage Kidney Stones:** If you develop kidney stones, which can be more common in people with Medullary Sponge Kidney, follow your doctor's advice for prevention and treatment.
+4.  **Avoid Certain Medications:** Some medications, like certain NSAIDs (nonsteroidal anti-inflammatory drugs) used for pain or inflammation, can potentially affect kidney function. Discuss this with your doctor before taking any new medications.
+5.  **Maintain a Healthy Diet:** A balanced diet rich in fruits and vegetables can be beneficial for overall kidney health.
+
+It's important to work closely with your doctor to monitor your kidney function and manage any symptoms or complications that may arise. If you have Medullary Sponge Kidney, they may recommend regular check-ups and specific tests.",,False,False,False,0.0,False,,,,stop,34.98697109997738,156,319,3.384852,29.429811,0.0438219
+medquad,open,What is (are) Adrenal Gland Disorders ?,,,,"Adrenal gland disorders are conditions that affect the adrenal glands, which are small glands located on top of your kidneys. These glands produce hormones that help regulate many functions in your body, including blood pressure, metabolism, immune response, and stress response.
+
+There are many different types of adrenal gland disorders, including:
+
+*   **Cushing's syndrome:** This occurs when the adrenal glands produce too much cortisol, a steroid hormone. Symptoms can include weight gain, high blood pressure, and skin changes.
+*   **Addison's disease:** This is a rare condition where the adrenal glands do not produce enough cortisol and sometimes aldosterone. Symptoms can include fatigue, weight loss, and low blood pressure.
+*   **Congenital adrenal hyperplasia (CAH):** This is a group of inherited disorders that affect the adrenal glands. It can cause various symptoms depending on the specific type.
+*   **Pheochromocytoma:** This is a rare tumor of the adrenal gland that produces too much adrenaline (epinephrine). Symptoms can include high blood pressure, rapid heartbeat, and sweating.
+*   **Adrenal insufficiency:** This is a general term for conditions where the adrenal glands do not produce enough hormones.
+
+If you are experiencing any symptoms that might indicate an adrenal gland disorder, it is important to see a doctor for a proper diagnosis and treatment plan.","Adrenal gland disorders are conditions that affect the adrenal glands, which are small glands located on top of your kidneys. These glands produce hormones that help regulate many functions in your body, including blood pressure, metabolism, immune response, and stress response.
+
+There are many different types of adrenal gland disorders, including:
+
+*   **Cushing's syndrome:** This occurs when the adrenal glands produce too much cortisol, a steroid hormone. Symptoms can include weight gain, high blood pressure, and skin changes.
+*   **Addison's disease:** This is a rare condition where the adrenal glands do not produce enough cortisol and sometimes aldosterone. Symptoms can include fatigue, weight loss, and low blood pressure.
+*   **Congenital adrenal hyperplasia (CAH):** This is a group of inherited disorders that affect the adrenal glands. It can cause various symptoms depending on the specific type.
+*   **Pheochromocytoma:** This is a rare tumor of the adrenal gland that produces too much adrenaline (epinephrine). Symptoms can include high blood pressure, rapid heartbeat, and sweating.
+*   **Adrenal insufficiency:** This is a general term for conditions where the adrenal glands do not produce enough hormones.
+
+If you are experiencing any symptoms that might indicate an adrenal gland disorder, it is important to see a doctor for a proper diagnosis and treatment plan.",,False,False,False,0.0,False,,,,stop,31.043396900000516,159,276,3.457738,25.400315,0.0502143
+medquad,open,What are the symptoms of Parkinson disease type 9 ?,,,,"Parkinson disease type 9 does not exist. Parkinson's disease is a progressive neurological disorder that affects movement. While there are different types of Parkinson's disease, including Parkinson's disease with Lewy bodies (PD-LBD) and Parkinson's disease dementia (PDD), there isn't a recognized ""type 9"". 
+
+The most common type is Parkinson's disease (PD). Symptoms typically include:
+
+*   **Tremor:** Often a resting tremor, which looks like a shaky hand.
+*   **Rigidity:** Stiffness in the limbs or neck.
+*   **Bradykinesia:** Slowness of movement.
+*   **Postural instability:** Impaired balance and coordination, leading to falls.
+
+If you are experiencing symptoms that concern you, it's best to consult a doctor for a proper diagnosis and management plan.","Parkinson disease type 9 does not exist. Parkinson's disease is a progressive neurological disorder that affects movement. While there are different types of Parkinson's disease, including Parkinson's disease with Lewy bodies (PD-LBD) and Parkinson's disease dementia (PDD), there isn't a recognized ""type 9"". 
+
+The most common type is Parkinson's disease (PD). Symptoms typically include:
+
+*   **Tremor:** Often a resting tremor, which looks like a shaky hand.
+*   **Rigidity:** Stiffness in the limbs or neck.
+*   **Bradykinesia:** Slowness of movement.
+*   **Postural instability:** Impaired balance and coordination, leading to falls.
+
+If you are experiencing symptoms that concern you, it's best to consult a doctor for a proper diagnosis and management plan.",,False,False,False,0.0,False,,,,stop,21.9797794999904,159,180,3.439909,16.357666,0.0470333
+medquad,open,What is (are) Thyroid Diseases ?,,,,"The thyroid is a gland in your neck that makes hormones that control your metabolism, which is how your body uses energy. Thyroid diseases are conditions that affect this gland. There are many different types of thyroid diseases, including:
+
+*   **Hyperthyroidism:** This happens when your thyroid gland makes too much thyroid hormone. It can cause symptoms like weight loss, rapid heartbeat, anxiety, and tremors.
+*   **Hypothyroidism:** This happens when your thyroid gland doesn't make enough thyroid hormone. It can cause symptoms like weight gain, fatigue, feeling cold, and depression.
+*   **Goiter:** This is an enlargement of the thyroid gland. It can be caused by various conditions, including hyperthyroidism and hypothyroidism.
+*   **Thyroid nodules:** These are lumps in the thyroid gland. Most nodules are not cancerous, but some can be.
+*   **Thyroid cancer:** This is a rare type of cancer that starts in the thyroid gland.
+
+There are many different types of thyroid diseases, including:
+
+*   **Hyperthyroidism:** This happens when your thyroid gland makes too much thyroid hormone. It can cause symptoms like weight loss, rapid heartbeat, anxiety, and tremors.
+*   **Hypothyroidism:** This happens when your thyroid gland doesn't make enough thyroid hormone. It can cause symptoms like weight gain, fatigue, feeling cold, and depression.
+*   **Goiter:** This is an enlargement of the thyroid gland. It can be caused by various conditions, including hyperthyroidism and hypothyroidism.
+*   **Thyroid nodules:** These are lumps in the thyroid gland. Most nodules are not cancerous, but some can be.
+*   **Thyroid cancer:** This is a rare type of cancer that starts in the thyroid gland.
+
+If you have any symptoms that concern you, please see a doctor.","The thyroid is a gland in your neck that makes hormones that control your metabolism, which is how your body uses energy. Thyroid diseases are conditions that affect this gland. There are many different types of thyroid diseases, including:
+
+*   **Hyperthyroidism:** This happens when your thyroid gland makes too much thyroid hormone. It can cause symptoms like weight loss, rapid heartbeat, anxiety, and tremors.
+*   **Hypothyroidism:** This happens when your thyroid gland doesn't make enough thyroid hormone. It can cause symptoms like weight gain, fatigue, feeling cold, and depression.
+*   **Goiter:** This is an enlargement of the thyroid gland. It can be caused by various conditions, including hyperthyroidism and hypothyroidism.
+*   **Thyroid nodules:** These are lumps in the thyroid gland. Most nodules are not cancerous, but some can be.
+*   **Thyroid cancer:** This is a rare type of cancer that starts in the thyroid gland.
+
+There are many different types of thyroid diseases, including:
+
+*   **Hyperthyroidism:** This happens when your thyroid gland makes too much thyroid hormone. It can cause symptoms like weight loss, rapid heartbeat, anxiety, and tremors.
+*   **Hypothyroidism:** This happens when your thyroid gland doesn't make enough thyroid hormone. It can cause symptoms like weight gain, fatigue, feeling cold, and depression.
+*   **Goiter:** This is an enlargement of the thyroid gland. It can be caused by various conditions, including hyperthyroidism and hypothyroidism.
+*   **Thyroid nodules:** These are lumps in the thyroid gland. Most nodules are not cancerous, but some can be.
+*   **Thyroid cancer:** This is a rare type of cancer that starts in the thyroid gland.
+
+If you have any symptoms that concern you, please see a doctor.",,False,False,False,0.0,False,,,,stop,40.61688629997661,156,378,3.35035,35.11364,0.0344491
+medquad,open,What are the treatments for recurrent hydatidiform mole ?,,,,"Recurrent hydatidiform mole is a condition where a woman has had one or more hydatidiform moles, and then becomes pregnant again and has another one. The treatments depend on the specific situation, including the stage of pregnancy, the number of moles, and the woman's overall health.
+
+The main treatments include:
+
+1.  **Medical Management:** This is often the first line of treatment. It involves taking medications to stop the pregnancy.
+    *   **Methotrexate:** This is a common medication used to stop the growth of the mole. It's usually given as an injection or intravenously.
+    *   **Dugastromelate:** This is another medication used to stop the mole's growth. It's typically given intravenously.
+    *   **Cisplatin:** This is a chemotherapy drug that can be used to stop the mole's growth. It's usually given intravenously.
+    *   **Bevizumab:** This is a targeted therapy drug that can be used to stop the mole's growth. It's usually given intravenously.
+
+2.  **Surgical Management:** If medical management is not successful or if the mole is very large, surgery may be needed.
+    *   **Dilation and Evacuation (D&E):** This is a surgical procedure to remove the mole from the uterus. It involves dilating the cervix and then removing the contents of the uterus.
+    *   **Hysterectomy:** In some cases, if the mole is very large or if there are other complications, a hysterectomy (removal of the uterus) may be necessary.
+
+3.  **Other Treatments:**
+    *   **Progesterone:** Sometimes, progesterone medication is given to help stop the mole's growth.
+    *   **Estrogen:** Estrogen medication may also be used in some cases.
+
+It's important to consult with a doctor to determine the best treatment plan for your specific situation. They will consider your medical history, the stage of your pregnancy, and other factors to recommend the most appropriate treatment.","Recurrent hydatidiform mole is a condition where a woman has had one or more hydatidiform moles, and then becomes pregnant again and has another one. The treatments depend on the specific situation, including the stage of pregnancy, the number of moles, and the woman's overall health.
+
+The main treatments include:
+
+1.  **Medical Management:** This is often the first line of treatment. It involves taking medications to stop the pregnancy.
+    *   **Methotrexate:** This is a common medication used to stop the growth of the mole. It's usually given as an injection or intravenously.
+    *   **Dugastromelate:** This is another medication used to stop the mole's growth. It's typically given intravenously.
+    *   **Cisplatin:** This is a chemotherapy drug that can be used to stop the mole's growth. It's usually given intravenously.
+    *   **Bevizumab:** This is a targeted therapy drug that can be used to stop the mole's growth. It's usually given intravenously.
+
+2.  **Surgical Management:** If medical management is not successful or if the mole is very large, surgery may be needed.
+    *   **Dilation and Evacuation (D&E):** This is a surgical procedure to remove the mole from the uterus. It involves dilating the cervix and then removing the contents of the uterus.
+    *   **Hysterectomy:** In some cases, if the mole is very large or if there are other complications, a hysterectomy (removal of the uterus) may be necessary.
+
+3.  **Other Treatments:**
+    *   **Progesterone:** Sometimes, progesterone medication is given to help stop the mole's growth.
+    *   **Estrogen:** Estrogen medication may also be used in some cases.
+
+It's important to consult with a doctor to determine the best treatment plan for your specific situation. They will consider your medical history, the stage of your pregnancy, and other factors to recommend the most appropriate treatment.",,False,False,False,0.0,False,,,,stop,46.14639479998732,160,432,3.444397,40.508809,0.0608142
+medquad,open,What are the symptoms of Congenital dyserythropoietic anemia type 2 ?,,,,"Congenital dyserythropoietic anemia type 2 (CDA2) is a rare inherited blood disorder. The main symptom is anemia, which means you have a lower than normal number of red blood cells. This can make you feel tired, weak, and short of breath. Other symptoms can include:
+
+*   **Jaundice:** Yellowing of the skin and eyes.
+*   **Gallstones:** Hardened deposits in the gallbladder.
+*   **Increased risk of infections:** Due to a lower number of red blood cells.
+*   **Bone marrow problems:** Such as enlargement of the spleen or liver.
+
+It's important to see a doctor for a proper diagnosis and management plan.","Congenital dyserythropoietic anemia type 2 (CDA2) is a rare inherited blood disorder. The main symptom is anemia, which means you have a lower than normal number of red blood cells. This can make you feel tired, weak, and short of breath. Other symptoms can include:
+
+*   **Jaundice:** Yellowing of the skin and eyes.
+*   **Gallstones:** Hardened deposits in the gallbladder.
+*   **Increased risk of infections:** Due to a lower number of red blood cells.
+*   **Bone marrow problems:** Such as enlargement of the spleen or liver.
+
+It's important to see a doctor for a proper diagnosis and management plan.",,False,False,False,0.0,False,,,,stop,20.021258699998725,166,146,3.656461,14.148318,0.040081
+medquad,open,What is (are) Balance Problems ?,,,,"Balance problems are difficulty maintaining your body's equilibrium, which can make you feel unsteady, dizzy, or like you might fall. This can happen when you are standing still, walking, or moving.
+
+There are many reasons why someone might experience balance problems, including:
+
+*   **Problems in your inner ear:** This part of your ear helps you sense movement and maintain balance. Issues like BPPV (Benign Paroxysmal Positional Vertigo) or Meniere's disease can cause dizziness and vertigo (a spinning sensation).
+*   **Vision problems:** If you can't see clearly, it can affect your balance.
+*   **Medications:** Some medicines can cause dizziness or drowsiness, which can impact your balance.
+*   **Neurological conditions:** Conditions affecting the brain or nerves that control balance, such as Parkinson's disease or stroke.
+*   **Cardiovascular issues:** Problems with blood pressure or heart rate can affect balance.
+*   **Anemia:** Low red blood cell count can cause dizziness and lightheadedness.
+*   **Dehydration:** Not drinking enough fluids can affect blood pressure and concentration.
+*   **Orthostatic hypotension:** A sudden drop in blood pressure when you stand up.
+
+If your balance problems are new, sudden, getting worse, or interfering with your daily activities, it's a good idea to see a doctor to figure out the cause and get appropriate treatment.","Balance problems are difficulty maintaining your body's equilibrium, which can make you feel unsteady, dizzy, or like you might fall. This can happen when you are standing still, walking, or moving.
+
+There are many reasons why someone might experience balance problems, including:
+
+*   **Problems in your inner ear:** This part of your ear helps you sense movement and maintain balance. Issues like BPPV (Benign Paroxysmal Positional Vertigo) or Meniere's disease can cause dizziness and vertigo (a spinning sensation).
+*   **Vision problems:** If you can't see clearly, it can affect your balance.
+*   **Medications:** Some medicines can cause dizziness or drowsiness, which can impact your balance.
+*   **Neurological conditions:** Conditions affecting the brain or nerves that control balance, such as Parkinson's disease or stroke.
+*   **Cardiovascular issues:** Problems with blood pressure or heart rate can affect balance.
+*   **Anemia:** Low red blood cell count can cause dizziness and lightheadedness.
+*   **Dehydration:** Not drinking enough fluids can affect blood pressure and concentration.
+*   **Orthostatic hypotension:** A sudden drop in blood pressure when you stand up.
+
+If your balance problems are new, sudden, getting worse, or interfering with your daily activities, it's a good idea to see a doctor to figure out the cause and get appropriate treatment.","The user wants to know what balance problems are. I should define balance problems in simple terms, explain their common causes, and mention when they might require medical attention.
+
+1.  **Definition:** Balance problems are difficulty maintaining equilibrium, which can lead to feeling unsteady, dizzy, or like you might fall.
+2.  **Causes:**
+    *   **Inner Ear Issues:** Problems with the vestibular system (part of the inner ear) that sense head movement and help with balance. Examples: BPPV (Benign Paroxysmal Positional Vertigo), Meniere's disease, labyrinthitis.
+    *   **Vision Problems:** Difficulty seeing clearly can affect balance.
+    *   **Medications:** Many drugs can cause dizziness or drowsiness, affecting balance.
+    *   **Neurological Conditions:** Conditions affecting the brain or nerves that control balance. Examples: Parkinson's disease, multiple sclerosis, stroke.
+    *   **Cardiovascular Issues:** Problems with blood pressure or heart rate can affect balance.
+    *   **Anemia:** Low red blood cell count can cause dizziness and lightheadedness.
+    *   **Dehydration:** Lack of fluids can affect blood pressure and concentration.
+    *   **Orthostatic Hypotension:** A sudden drop in blood pressure when standing up.
+    *   **Other:** Diabetes, thyroid problems, inner ear infections, etc.
+3.  **When to see a doctor:**
+    *   If balance problems are new, sudden, or getting worse.
+    *   If they interfere with daily activities (walking, standing).
+    *   If accompanied by other symptoms like dizziness, vertigo (spinning sensation), nausea, headache, weakness, numbness, confusion, or difficulty walking.
+    *   If you have underlying health conditions.
+    *   If you are taking medications that might cause dizziness.
+
+**Plan:**
+1.  Start with a clear definition of balance problems.
+2.  List common causes in simple language.
+3.  State when it's important to see a doctor.
+4.  Ensure the language is plain and easy for a non-medical person to understand.
+5.  Avoid medical jargon where possible.
+6.  Do not diagnose or give advice.
+7.  Start the answer directly with the definition.",False,False,False,0.0,False,,,,stop,80.26603759999853,156,781,3.38946,74.67681,0.0631178
+medquad,open,What to do for Causes of Diabetes ?,,,,"Diabetes is caused by problems with insulin, a hormone that helps your body turn food into energy. There are two main types: Type 1 and Type 2.
+
+**Type 1 Diabetes:** This happens when your pancreas doesn't make enough insulin. It often develops in children and young adults, but can happen at any age. It's an autoimmune condition, meaning your body's system attacks the insulin-producing cells.
+
+**Type 2 Diabetes:** This is the most common type. It happens when your body doesn't use insulin properly (called insulin resistance), and eventually, your pancreas can't make enough insulin to keep up. It often develops over many years and is linked to lifestyle factors like diet and physical activity, as well as genetics.
+
+**Other causes:** Less common causes include:
+*   **Gestational Diabetes:** Diabetes that develops during pregnancy.
+*   **Monogenic Diabetes:** Rare forms caused by specific gene mutations.
+*   **Drug-induced Diabetes:** Certain medications can cause high blood sugar.
+*   **Pancreatic disease:** Conditions that damage the pancreas.
+
+**When to see a doctor:**
+If you have symptoms like excessive thirst, frequent urination, unexplained weight loss, fatigue, or blurred vision, see a doctor. They can check your blood sugar and determine the cause of your symptoms.","Diabetes is caused by problems with insulin, a hormone that helps your body turn food into energy. There are two main types: Type 1 and Type 2.
+
+**Type 1 Diabetes:** This happens when your pancreas doesn't make enough insulin. It often develops in children and young adults, but can happen at any age. It's an autoimmune condition, meaning your body's system attacks the insulin-producing cells.
+
+**Type 2 Diabetes:** This is the most common type. It happens when your body doesn't use insulin properly (called insulin resistance), and eventually, your pancreas can't make enough insulin to keep up. It often develops over many years and is linked to lifestyle factors like diet and physical activity, as well as genetics.
+
+**Other causes:** Less common causes include:
+*   **Gestational Diabetes:** Diabetes that develops during pregnancy.
+*   **Monogenic Diabetes:** Rare forms caused by specific gene mutations.
+*   **Drug-induced Diabetes:** Certain medications can cause high blood sugar.
+*   **Pancreatic disease:** Conditions that damage the pancreas.
+
+**When to see a doctor:**
+If you have symptoms like excessive thirst, frequent urination, unexplained weight loss, fatigue, or blurred vision, see a doctor. They can check your blood sugar and determine the cause of your symptoms.",,False,False,False,0.0,False,,,,stop,30.94613070000196,156,276,3.381792,25.407646,0.0175867
+medquad,open,What is (are) Prostate Cancer ?,,,,"Prostate cancer is a type of cancer that starts in the prostate gland. The prostate is a small gland that is part of the male reproductive system. It makes some of the fluid that nourishes sperm.
+
+There are two main types of prostate cancer:
+
+1.  **Invasive cancer:** This type of cancer grows into surrounding tissues.
+2.  **Non-invasive cancer:** This type of cancer stays within the prostate gland.
+
+Prostate cancer can be slow-growing and take many years to become life-threatening, or it can grow quickly and spread to other parts of the body.
+
+Symptoms of prostate cancer can include:
+*   Difficulty urinating
+*   Frequent urination
+*   Blood in the urine
+*   Blood in the semen
+*   Painful ejaculation
+*   Erectile dysfunction
+*   Bone pain
+
+These symptoms are not always present, especially in the early stages.
+
+Prostate cancer is usually diagnosed through a physical exam, blood tests, and imaging tests like PSA (prostate-specific antigen) blood test and MRI.
+
+Treatment options depend on the stage of the cancer and the patient's overall health. Treatments can include surgery, radiation therapy, hormone therapy, chemotherapy, and immunotherapy.
+
+If you have any concerns about prostate cancer, please consult a doctor.","Prostate cancer is a type of cancer that starts in the prostate gland. The prostate is a small gland that is part of the male reproductive system. It makes some of the fluid that nourishes sperm.
+
+There are two main types of prostate cancer:
+
+1.  **Invasive cancer:** This type of cancer grows into surrounding tissues.
+2.  **Non-invasive cancer:** This type of cancer stays within the prostate gland.
+
+Prostate cancer can be slow-growing and take many years to become life-threatening, or it can grow quickly and spread to other parts of the body.
+
+Symptoms of prostate cancer can include:
+*   Difficulty urinating
+*   Frequent urination
+*   Blood in the urine
+*   Blood in the semen
+*   Painful ejaculation
+*   Erectile dysfunction
+*   Bone pain
+
+These symptoms are not always present, especially in the early stages.
+
+Prostate cancer is usually diagnosed through a physical exam, blood tests, and imaging tests like PSA (prostate-specific antigen) blood test and MRI.
+
+Treatment options depend on the stage of the cancer and the patient's overall health. Treatments can include surgery, radiation therapy, hormone therapy, chemotherapy, and immunotherapy.
+
+If you have any concerns about prostate cancer, please consult a doctor.",,False,False,False,0.0,False,,,,stop,30.208238000050187,156,269,3.358369,24.674206,0.0349115
+medquad,open,How many people are affected by STING-associated vasculopathy with onset in infancy ?,,,,"The answer is: Approximately 1 in 10,000 to 1 in 20,000 live births.","The answer is: Approximately 1 in 10,000 to 1 in 20,000 live births.",,False,False,False,0.0,False,,,,stop,8.384634700021707,165,30,3.536901,2.673054,0.0206541
+medquad,open,What are the genetic changes related to myoclonus-dystonia ?,,,,"Myoclonus-dystonia is a rare genetic disorder that causes involuntary muscle twitching (myoclonus) and muscle stiffness (dystonia). It is caused by mutations in the *TDP43* gene. This gene provides instructions for making a protein that is involved in the processing and packaging of RNA, which is essential for gene expression. Mutations in *TDP43* can lead to the accumulation of abnormal RNA fragments, which can disrupt the function of other proteins and lead to the symptoms of myoclonus-dystonia.
+There are different types of mutations in the *TDP43* gene that can cause myoclonus-dystonia, including point mutations, deletions, and duplications. These mutations can vary in their severity and may lead to different clinical presentations.
+It is important to note that the exact genetic changes related to myoclonus-dystonia can vary from person to person. If you have been diagnosed with myoclonus-dystonia, it is recommended that you consult with a genetic counselor to discuss the specific genetic changes related to your condition. They can provide you with more detailed information about your specific mutation and its potential implications.
+If you are experiencing symptoms of myoclonus-dystonia, please consult with a healthcare professional for proper diagnosis and treatment.","Myoclonus-dystonia is a rare genetic disorder that causes involuntary muscle twitching (myoclonus) and muscle stiffness (dystonia). It is caused by mutations in the *TDP43* gene. This gene provides instructions for making a protein that is involved in the processing and packaging of RNA, which is essential for gene expression. Mutations in *TDP43* can lead to the accumulation of abnormal RNA fragments, which can disrupt the function of other proteins and lead to the symptoms of myoclonus-dystonia.
+There are different types of mutations in the *TDP43* gene that can cause myoclonus-dystonia, including point mutations, deletions, and duplications. These mutations can vary in their severity and may lead to different clinical presentations.
+It is important to note that the exact genetic changes related to myoclonus-dystonia can vary from person to person. If you have been diagnosed with myoclonus-dystonia, it is recommended that you consult with a genetic counselor to discuss the specific genetic changes related to your condition. They can provide you with more detailed information about your specific mutation and its potential implications.
+If you are experiencing symptoms of myoclonus-dystonia, please consult with a healthcare professional for proper diagnosis and treatment.",,False,False,False,0.0,False,,,,stop,32.32475410000188,164,278,3.591606,26.609886,0.0462388
