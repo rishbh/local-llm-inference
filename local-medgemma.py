@@ -51,6 +51,7 @@ Outputs (in ./bench_results/)
 """
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -547,6 +548,38 @@ def rescore(path):
     return acc
 
 
+def make_run_dir(parent, run_name=None, flat=False):
+    """Give this run its own folder so comparing runs doesn't mean losing one.
+
+    bench_results/
+      2026-11-17_21-32-05/   <- one run: per_question.csv, summary.json, ...
+      2026-11-18_09-14-40/
+      latest -> 2026-11-18_09-14-40
+    """
+    os.makedirs(parent, exist_ok=True)
+    if flat:
+        return parent
+
+    name = run_name or datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    run_dir = os.path.join(parent, name)
+    # Never write into a folder that already holds a run
+    n = 2
+    while os.path.exists(run_dir):
+        run_dir = os.path.join(parent, f"{name}-{n}")
+        n += 1
+    os.makedirs(run_dir)
+
+    # A stable path for scripts and docs, pointing at the newest run
+    link = os.path.join(parent, "latest")
+    try:
+        if os.path.islink(link) or os.path.exists(link):
+            os.remove(link)
+        os.symlink(os.path.basename(run_dir), link)  # relative: survives a move
+    except OSError as e:
+        print(f"(could not update the 'latest' link: {e})")
+    return run_dir
+
+
 # ----------------------------------------------------------------------------
 # 5. Main
 # ----------------------------------------------------------------------------
@@ -561,7 +594,13 @@ def main():
     p.add_argument("--usd-inr", type=float, default=88.0, help="exchange rate for cloud comparison")
     p.add_argument("--ctx", type=int, default=4096)
     p.add_argument("--rapl", action="store_true", help="Linux: measure CPU energy directly")
-    p.add_argument("--out", default="bench_results")
+    p.add_argument("--out", default="bench_results",
+                   help="parent folder; each run gets its own timestamped subfolder")
+    p.add_argument("--run-name", default=None,
+                   help="name the run folder yourself instead of using a timestamp, "
+                        "e.g. --run-name q8-budget1600")
+    p.add_argument("--no-subfolder", action="store_true",
+                   help="write straight into --out, overwriting the previous run")
     p.add_argument("--datasets", default="healthsearchqa,kqa,medquad",
                    help="comma-separated. Default is the patient-style sets (the product "
                         "use case). Exam sets: medmcqa,medqa,pubmedqa")
@@ -599,7 +638,9 @@ def main():
         a.max_tokens_open = 2400 if a.think else 1600
 
     check_ollama(a.model)
-    os.makedirs(a.out, exist_ok=True)
+    parent, a.out = a.out, make_run_dir(a.out, a.run_name, a.no_subfolder)
+    if a.out != parent:
+        print(f"Run folder: {os.path.abspath(a.out)}")
 
     print("Loading datasets...")
     data = load_samples(a.n)
@@ -751,6 +792,8 @@ def main():
     lat = sorted(df.wall_s)
 
     summary = {
+        "run": os.path.basename(os.path.abspath(a.out)),
+        "finished_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
         "model": a.model,
         "questions": len(df),
         "datasets": list(data),

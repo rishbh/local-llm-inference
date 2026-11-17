@@ -1,0 +1,11 @@
+# Convenience pointer at the newest run; rewritten on every run, so not tracked.
+bench_results/latest
+
+# Never commit credentials. Bedrock/Anthropic keys belong in the environment.
+.env
+*.pem
+
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,8 +1,8 @@
 # Clinical grading report — MedGemma 1.5 4B, 50 MedQuAD questions
 
-Run of 17 Nov 2026 (`bench_results/clinical_for_review.csv`, 50 rows, MedQuAD only).
-Graded by hand against the rubric in `grading_prompt.md`.
-Filled-in scores: `bench_results/clinical_graded.csv`.
+Run of 17 Nov 2026 (`clinical_for_review.csv` in this folder, 50 rows, MedQuAD only).
+Graded by hand against the rubric in `grading_prompt.md` at the repo root.
+Filled-in scores: `clinical_graded.csv`, alongside this file.
 
 ---
 
