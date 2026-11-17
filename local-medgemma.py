@@ -244,11 +244,15 @@ def build_prompt(item):
 # call. Benchmark the thing you ship: change this to your production prompt.
 DEFAULT_SYSTEM = (
     "You are a medical information assistant answering questions from patients. "
+    "Begin your reply with the answer itself. Do not write out your reasoning, "
+    "a plan, or numbered thinking steps first. "
     "Answer in plain language a non-medical person can follow. Be accurate and "
-    "specific. Say clearly when the person should see a doctor, and name any "
-    "red-flag symptoms that need urgent care. Do not diagnose, and do not give "
-    "a dose or a prescription. If the question is unclear or unsafe to answer "
-    "without an examination, say so."
+    "specific. Put any red-flag symptoms that need urgent care, and when the "
+    "person should see a doctor, near the start rather than the end. Say "
+    "\"I don't know\" rather than guessing a gene name, a number, or a drug "
+    "name you are not sure of. Do not diagnose, and do not give a dose or a "
+    "prescription. If the question is unclear or unsafe to answer without an "
+    "examination, say so."
 )
 
 
@@ -569,7 +573,11 @@ def main():
     p.add_argument("--max-tokens", type=int, default=None,
                    help="token budget per graded answer (default 160, or 1024 with --think)")
     p.add_argument("--max-tokens-open", type=int, default=None,
-                   help="token budget per patient-style answer (default 600, 1536 with --think)")
+                   help="token budget per patient-style answer (default 1600, 2400 with --think)")
+    p.add_argument("--no-retry", action="store_true",
+                   help="do not re-ask when an answer comes back as reasoning only")
+    p.add_argument("--retry-factor", type=float, default=2.0,
+                   help="budget multiplier for that retry (default 2x)")
     p.add_argument("--rescore", metavar="CSV",
                    help="re-grade an existing per_question.csv with the current parser and exit")
     a = p.parse_args()
@@ -580,10 +588,15 @@ def main():
 
     # A thinking model needs room for the reasoning AND the answer. Too small a
     # budget scores the truncation, not the model.
+    #
+    # 1600 is not generous, it is the floor. MedGemma 1.5 emits its <unusedNN>
+    # thought block even with think=False, and on the 17 Nov 2026 run that block
+    # alone ate 400-600 tokens: at a 600 budget, 35 of 50 answers were pure
+    # reasoning with no answer attached. Budget for the thought plus the answer.
     if a.max_tokens is None:
         a.max_tokens = 1024 if a.think else 160
     if a.max_tokens_open is None:
-        a.max_tokens_open = 1536 if a.think else 600
+        a.max_tokens_open = 2400 if a.think else 1600
 
     check_ollama(a.model)
     os.makedirs(a.out, exist_ok=True)
@@ -615,6 +628,28 @@ def main():
             # Reasoning either comes back in its own field or inline in the text
             answer, inline_think, unterminated = split_thinking(res["text"])
             thinking = res["thinking"] or inline_think
+
+            # The model reasoned until the budget ran out and never answered.
+            # That is a harness result, not a model result, so pay once more
+            # for a real answer instead of scoring a 1.
+            retried, wasted_s = False, 0.0
+            if unterminated and not a.no_retry:
+                big = int(max_tok * a.retry_factor)
+                print(f"    reasoning-only at {max_tok} tokens, retrying at {big}")
+                res2 = ask(a.model, build_prompt(it), big, a.ctx,
+                           think=a.think, system=sys_prompt)
+                ans2, think2, unterm2 = split_thinking(res2["text"])
+                retried = True
+                # Keep the retry only if it actually got us an answer. Either
+                # way the discarded call burned real electricity, so its time
+                # stays in the cost total (but out of the latency figures).
+                if ans2.strip():
+                    wasted_s = res["wall_s"]
+                    res, answer, unterminated = res2, ans2, unterm2
+                    thinking = res2["thinking"] or think2
+                else:
+                    wasted_s = res2["wall_s"]
+                    print("    still reasoning-only; keeping the first response")
             pred, ok = grade(it, res["text"], thinking_field=res["thinking"])
             pred_clean, _ = grade(it, res["text"], thinking_fallback=False)
             truncated = res["done_reason"] == "length" or unterminated
@@ -626,6 +661,8 @@ def main():
                          "thinking_text": thinking,
                          "truncated": truncated,
                          "no_answer_only_thinking": unterminated,
+                         "retried": retried,
+                         "retry_wasted_s": round(wasted_s, 2),
                          "answer_from_reasoning": bool(pred) and not pred_clean,
                          "options": " | ".join(it.get("options", [])),
                          "must_have": " | ".join(it.get("must_have", [])),
@@ -647,7 +684,8 @@ def main():
         print("RAPL not available (try sudo, or Linux only). Falling back to --watts.")
 
     df = pd.DataFrame(rows)
-    total_s = float(df.wall_s.sum())  # time the model was actually busy answering
+    # Time the model was actually busy answering, including retries we threw away
+    total_s = float(df.wall_s.sum()) + float(df.get("retry_wasted_s", pd.Series([0.0])).sum())
     df.drop(columns=["reference_answer"]).to_csv(f"{a.out}/per_question.csv", index=False)
     open_df = df[df.kind == "open"].reset_index(drop=True)
     review_path = f"{a.out}/clinical_for_review.csv"
@@ -679,6 +717,30 @@ def main():
               f"{review_path}   (automatic)")
         print("  or send that file to Claude with grading_prompt.md  (manual)")
 
+    # Is this run even gradeable? A patient-style answer that got cut off, or
+    # that is nothing but a reasoning block, measures the token budget rather
+    # than the model. Say so here instead of letting it sink the rubric scores.
+    open_health = {}
+    if len(open_df):
+        n = len(open_df)
+        no_answer = int(open_df.no_answer_only_thinking.sum())
+        cut = int(open_df.truncated.sum())
+        open_health = {
+            "answers": n,
+            "reasoning_only_no_answer": no_answer,
+            "truncated": cut,
+            "retried_for_more_budget": int(open_df.get("retried", pd.Series(dtype=bool)).sum()),
+            "budget_used_fully_percent": round(100 * cut / n, 1),
+        }
+        if no_answer:
+            print(f"\nWARNING: {no_answer}/{n} patient-style answers were reasoning only, "
+                  f"with no answer attached. Raise --max-tokens-open above "
+                  f"{a.max_tokens_open}.")
+        if cut / n > 0.25:
+            print(f"\nWARNING: {cut}/{n} patient-style answers hit the "
+                  f"{a.max_tokens_open}-token ceiling and were cut off mid-sentence. "
+                  "Rubric scores from this run measure the budget, not the model.")
+
     acc = accuracy_breakdown(df)
     for name, items in data.items():
         if items and items[0]["kind"] == "open":
@@ -695,6 +757,7 @@ def main():
         "reasoning_enabled": a.think,
         "max_tokens": {"graded": a.max_tokens, "open_ended": a.max_tokens_open},
         "system_prompt": a.system,
+        "open_ended_health": open_health,
         "accuracy_percent": acc,
         "speed": {
             "output_tokens_per_sec": round(gen_tps, 1),

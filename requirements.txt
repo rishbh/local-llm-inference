@@ -1,0 +1,8 @@
+# Running the benchmark (local-medgemma.py)
+datasets>=2.18        # downloads the question sets from Hugging Face
+requests>=2.31        # talks to Ollama on localhost:11434
+pandas>=2.0           # builds the result tables and CSVs
+psutil>=5.9           # samples RAM while the model answers
+
+# Automatic grading only (clinical_judge.py) - not needed to benchmark
+anthropic>=0.69       # add the [bedrock] extra to grade inside your AWS account

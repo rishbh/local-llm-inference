@@ -351,7 +351,10 @@ def main():
     p.add_argument("--model", default="claude-opus-5-5",
                    help="judge model (claude-sonnet-5-5 is cheaper)")
     p.add_argument("--platform", choices=["api", "bedrock"], default="api")
-    p.add_argument("--region", default="us-east-1", help="AWS region for --platform bedrock")
+    p.add_argument("--region", default="ap-south-1",
+                   help="AWS region for --platform bedrock. Defaults to Mumbai so "
+                        "answers stay in India; change it only if you have checked "
+                        "where the data is allowed to go.")
     p.add_argument("--effort", default="medium", choices=["low", "medium", "high"])
     p.add_argument("--limit", type=int, help="grade only the first N rows (try 5 first)")
     p.add_argument("--summary-only", action="store_true",
