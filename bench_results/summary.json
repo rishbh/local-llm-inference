@@ -1,0 +1,38 @@
+{
+  "model": "medgemma1.5",
+  "questions": 200,
+  "accuracy_percent": {
+    "medmcqa": 22.0,
+    "medqa": 40.0,
+    "pubmedqa": 30.0,
+    "medquad": "graded separately (see medquad_for_review.csv)"
+  },
+  "speed": {
+    "output_tokens_per_sec": 8.4,
+    "prompt_tokens_per_sec": 44.0,
+    "avg_time_to_first_token_s": 4.17,
+    "latency_p50_s": 19.01,
+    "latency_p95_s": 71.86,
+    "avg_output_tokens": 164.8,
+    "avg_prompt_tokens": 183.5
+  },
+  "memory": {
+    "peak_system_ram_gb": 16.87,
+    "total_ram_gb": 16.9
+  },
+  "cost": {
+    "energy_kwh": 0.09619,
+    "energy_source": "65.0 W x time",
+    "electricity_inr": 0.7695,
+    "hardware_wear_inr": 3.3785,
+    "total_inr": 4.148,
+    "inr_per_1000_questions": 20.74,
+    "inr_per_1M_total_tokens": 59.54,
+    "inr_per_1M_output_tokens": 125.84,
+    "cloud_reference_inr_per_1000_same_questions": {
+      "Claude Sonnet 5 (input/output)": 177.33
+    },
+    "max_questions_per_day_one_user_at_a_time": 3243
+  },
+  "total_run_time_min": 88.8
+}
