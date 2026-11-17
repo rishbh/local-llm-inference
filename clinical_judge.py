@@ -212,7 +212,7 @@ class Judge:
             raise SystemExit("judge: gave up after repeated rate limits")
 
         self.in_tok += resp.usage.input_tokens + \
-                       getattr(resp.usage, "cache_read_input_tokens", 0) or 0
+            getattr(resp.usage, "cache_read_input_tokens", 0) or 0
         self.out_tok += resp.usage.output_tokens
         if resp.stop_reason == "refusal":
             self.refusals += 1
