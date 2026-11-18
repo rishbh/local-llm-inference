@@ -100,34 +100,112 @@ def _as_list(v):
     return [p.strip() for p in re.split(r"\n|\s*\|\s*", s) if p.strip()]
 
 
-def _try_load(label, candidates, seed, n):
+def _diagnose(exc):
+    """Say what to DO about a load failure, where the exception is recognisable.
+
+    A bare 'DatasetNotFoundError: ...' sends you hunting. 'gated - accept the
+    terms and log in' tells you the next move.
+    """
+    name, s = type(exc).__name__, str(exc)
+    low = s.lower()
+    if "config name is missing" in low or "pick one among" in low:
+        return "needs a config name (the script now retries with each one)"
+    if "gated" in low or "restricted" in low or "must be authenticated" in low \
+            or name == "GatedRepoError" or "401" in s:
+        return ("GATED - open the dataset page in a browser, accept the terms, "
+                "then run: huggingface-cli login")
+    if name in ("DatasetNotFoundError", "RepositoryNotFoundError") \
+            or "404" in s or "doesn't exist" in low or "not found" in low:
+        return "no dataset with this id (renamed or removed)"
+    if "unknown split" in low or "bad split" in low:
+        return "wrong split name (the script now retries with the real splits)"
+    if "proxy" in low or "ssl" in low or "certificate" in low \
+            or "connection" in low or "timed out" in low:
+        return "NETWORK blocked - a proxy or VPN is between you and huggingface.co"
+    if "trust_remote_code" in low:
+        return "needs trust_remote_code=True (a loading script, not plain data)"
+    return None
+
+
+def _variants(repo, config, split):
+    """(config, split) pairs to try: the stated one, then what the repo says.
+
+    Two failures are common enough to handle automatically: a dataset that now
+    requires a config name, and one whose split is not called 'train'.
+    """
+    seen, out = set(), []
+
+    def add(c, s):
+        if (c, s) not in seen:
+            seen.add((c, s))
+            out.append((c, s))
+
+    add(config, split)
+    try:
+        from datasets import get_dataset_config_names
+        configs = list(get_dataset_config_names(repo))[:4]
+    except Exception:
+        configs = []
+    for c in configs:
+        add(c, split)
+    for c in ([config] if config else []) + configs + [None]:
+        try:
+            from datasets import get_dataset_split_names
+            splits = list(get_dataset_split_names(repo, c) if c
+                          else get_dataset_split_names(repo))
+        except Exception:
+            continue
+        # prefer the biggest general-purpose split
+        for s in sorted(splits, key=lambda x: ("train" not in x, "test" not in x, x)):
+            add(c, s)
+        break
+    return out[:8]
+
+
+def _try_load(label, candidates, seed, n, failures=None):
     """Try each (repo_id, config, split) in turn; return the first that loads.
 
-    Dataset repos get renamed and re-uploaded, so the first id is the one that
-    worked most recently and the rest are fallbacks. The id that succeeded is
-    printed so you know what you actually benchmarked against.
+    Dataset repos get renamed, gated and re-uploaded, so the first id is the one
+    that worked most recently and the rest are fallbacks. The id that succeeded
+    is printed so you know what you actually benchmarked against; if none do,
+    every attempt is reported with what to do about it, and the failure is
+    recorded so the run cannot quietly pretend the dataset was never asked for.
     """
     from datasets import load_dataset
 
     errors = []
     for repo, config, split in candidates:
-        try:
-            ds = load_dataset(repo, config, split=split) if config else \
-                load_dataset(repo, split=split)
+        for cfg, spl in _variants(repo, config, split):
+            try:
+                ds = load_dataset(repo, cfg, split=spl) if cfg else \
+                    load_dataset(repo, split=spl)
+            except Exception as e:
+                errors.append((repo, cfg, spl, e))
+                continue
             ds = ds.shuffle(seed=seed).select(range(min(n, len(ds))))
             print(f"  {label}: loaded {len(ds)} from {repo}"
-                  f"{'/' + config if config else ''} [{split}]")
+                  f"{'/' + cfg if cfg else ''} [{spl}]")
             return ds
-        except Exception as e:
-            errors.append(f"{repo}: {type(e).__name__}: {str(e)[:120]}")
-    print(f"  {label}: SKIPPED - none of the candidate repos loaded")
-    for e in errors:
-        print(f"      {e}")
+
+    print(f"  {label}: FAILED - none of the candidate repos loaded")
+    for repo, cfg, spl, e in errors:
+        where = f"{repo}{'/' + cfg if cfg else ''}[{spl}]"
+        print(f"      {where}: {type(e).__name__}: {str(e)[:160]}")
+        hint = _diagnose(e)
+        if hint:
+            print(f"        -> {hint}")
+    if failures is not None:
+        failures[label] = [f"{r}{'/' + (c or '')}[{s}]: {type(e).__name__}: "
+                           f"{str(e)[:160]}" for r, c, s, e in errors]
     return None
 
 
-def load_samples(n, seed=42):
-    """Return a dict of dataset_name -> list of question dicts."""
+def load_samples(n, seed=42, failures=None):
+    """Return a dict of dataset_name -> list of question dicts.
+
+    failures: optional dict, filled in with why each dataset that did not load
+    did not load, so the run can report it instead of silently going on.
+    """
     out = {}
     letters = "ABCD"
 
@@ -139,7 +217,8 @@ def load_samples(n, seed=42):
         ("katielink/healthsearchqa", None, "train"),
         ("openlifescienceai/healthsearchqa", None, "train"),
         ("Kabatubare/healthsearchqa", None, "train"),
-    ], seed, n)
+        ("ChuGyouk/HealthSearchQA", None, "train"),
+    ], seed, n, failures)
     if ds is not None:
         out["healthsearchqa"] = [{
             "kind": "open",
@@ -155,7 +234,7 @@ def load_samples(n, seed=42):
         ("Itaykhealth/K-QA", None, "train"),
         ("Itaykhealth/K-QA", "default", "train"),
         ("nvidia/K-QA", None, "train"),
-    ], seed, n)
+    ], seed, n, failures)
     if ds is not None:
         out["kqa"] = [{
             "kind": "open",
@@ -169,7 +248,7 @@ def load_samples(n, seed=42):
     ds = _try_load("medquad", [
         ("keivalya/MedQuad-MedicalQnADataset", None, "train"),
         ("lavita/MedQuAD", None, "train"),
-    ], seed, n)
+    ], seed, n, failures)
     if ds is not None:
         out["medquad"] = [{
             "kind": "open",
@@ -548,6 +627,36 @@ def rescore(path):
     return acc
 
 
+def check_datasets(wanted):
+    """Try to load every dataset and report, without touching Ollama.
+
+    Takes seconds and needs no model, so it answers "did my benchmark actually
+    use the data I think it used?" before you spend an hour generating answers.
+    """
+    print("Checking dataset access (no model needed)...\n")
+    failures = {}
+    data = load_samples(1, failures=failures)
+    data = {k: v for k, v in data.items() if not wanted or k in wanted}
+
+    print("\n" + "=" * 68)
+    ok = sorted(data)
+    bad = sorted(k for k in failures if not wanted or k in wanted)
+    for name in ok:
+        q = data[name][0]["question"] if data[name] else "(empty)"
+        print(f"  OK      {name:<16} e.g. {q[:60]}")
+    for name in bad:
+        print(f"  FAILED  {name}")
+    print("=" * 68)
+
+    if bad:
+        print(f"\n{len(bad)} dataset(s) unavailable: {', '.join(bad)}")
+        print("The per-attempt errors above say why. Paste them if you want "
+              "help picking a working id.")
+    else:
+        print("\nAll requested datasets load.")
+    return 1 if bad else 0
+
+
 def make_run_dir(parent, run_name=None, flat=False):
     """Give this run its own folder so comparing runs doesn't mean losing one.
 
@@ -619,11 +728,19 @@ def main():
                    help="budget multiplier for that retry (default 2x)")
     p.add_argument("--rescore", metavar="CSV",
                    help="re-grade an existing per_question.csv with the current parser and exit")
+    p.add_argument("--check-datasets", action="store_true",
+                   help="report which datasets load, and why the others do not, then exit "
+                        "(seconds, no model needed)")
     a = p.parse_args()
 
     if a.rescore:
         rescore(a.rescore)
         return
+
+    wanted = {d.strip() for d in a.datasets.split(",") if d.strip()}
+
+    if a.check_datasets:
+        raise SystemExit(check_datasets(wanted))
 
     # A thinking model needs room for the reasoning AND the answer. Too small a
     # budget scores the truncation, not the model.
@@ -643,11 +760,29 @@ def main():
         print(f"Run folder: {os.path.abspath(a.out)}")
 
     print("Loading datasets...")
-    data = load_samples(a.n)
-    wanted = {d.strip() for d in a.datasets.split(",")}
+    load_failures = {}
+    data = load_samples(a.n, failures=load_failures)
     data = {k: v for k, v in data.items() if k in wanted}
     if not data:
         raise SystemExit("No datasets loaded. Check your internet connection.")
+
+    # You asked for a dataset and did not get it. Say so now, before an hour of
+    # generation, and again in summary.json -- twice this slipped by unnoticed
+    # and the run silently measured MedQuAD alone.
+    missing = sorted(wanted - set(data))
+    if missing:
+        print()
+        print("!" * 68)
+        print(f"WARNING: you asked for {len(wanted)} dataset(s) but "
+              f"{len(missing)} did not load: {', '.join(missing)}")
+        print(f"         benchmarking only: {', '.join(sorted(data))}")
+        if "kqa" in missing:
+            print("         without kqa there are no must_have statements, so "
+                  "comprehensiveness\n         and contradiction cannot be scored at all")
+        print("         run with --check-datasets to see why, or --datasets "
+              f"{','.join(sorted(data))} to silence this")
+        print("!" * 68)
+        print()
 
     print("Warming up (first load of the model into memory)...")
     warm = ask(a.model, "Say OK.", 5, a.ctx, think=a.think)
@@ -797,6 +932,8 @@ def main():
         "model": a.model,
         "questions": len(df),
         "datasets": list(data),
+        "datasets_requested": sorted(wanted),
+        "datasets_failed": {k: v for k, v in load_failures.items() if k in wanted},
         "reasoning_enabled": a.think,
         "max_tokens": {"graded": a.max_tokens, "open_ended": a.max_tokens_open},
         "system_prompt": a.system,
