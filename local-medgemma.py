@@ -28,6 +28,10 @@ Run
             bigger token budget). Off by default: MedGemma 1.5 is a thinking
             model, and its reasoning block eats the whole budget before the
             answer appears.
+  --repeat-last-n
+            How far back the repetition penalty looks. Ollama's default of 64
+            tokens is too short to notice a repeated paragraph, which is the
+            loop this model falls into, so the default here is 256.
 
 Re-score an old run with the current parser (no model needed):
   python local-medgemma.py --rescore bench_results/per_question.csv
@@ -460,15 +464,23 @@ def rapl_energy_uj():
 _THINK_FIELD_OK = True  # cleared if this Ollama / model rejects the "think" field
 
 
-def ask(model, prompt, max_tokens, ctx, think=False, system=None):
+def ask(model, prompt, max_tokens, ctx, think=False, system=None,
+        repeat_penalty=None, repeat_last_n=None):
     global _THINK_FIELD_OK
     messages = ([{"role": "system", "content": system}] if system else []) + \
                [{"role": "user", "content": prompt}]
+    opts = {"temperature": 0, "num_predict": max_tokens, "num_ctx": ctx}
+    # Sent explicitly rather than left to Ollama, so a run is reproducible even
+    # if the model's own Modelfile sets these to something else.
+    if repeat_penalty is not None:
+        opts["repeat_penalty"] = repeat_penalty
+    if repeat_last_n is not None:
+        opts["repeat_last_n"] = repeat_last_n
     payload = {
         "model": model,
         "messages": messages,
         "stream": False,
-        "options": {"temperature": 0, "num_predict": max_tokens, "num_ctx": ctx},
+        "options": opts,
     }
     if _THINK_FIELD_OK:
         payload["think"] = bool(think)
@@ -726,6 +738,15 @@ def main():
                    help="do not re-ask when an answer comes back as reasoning only")
     p.add_argument("--retry-factor", type=float, default=2.0,
                    help="budget multiplier for that retry (default 2x)")
+    # Ollama's own defaults are 1.1 over a 64-token window. A 64-token window
+    # cannot see a repeated paragraph, which is the loop this model actually
+    # falls into, so the window is what is widened here.
+    p.add_argument("--repeat-penalty", type=float, default=1.1,
+                   help="penalty on tokens already generated (default 1.1; "
+                        "1.0 disables it)")
+    p.add_argument("--repeat-last-n", type=int, default=256,
+                   help="how far back the penalty looks, in tokens (default 256; "
+                        "0 disables it, -1 uses the whole context)")
     p.add_argument("--rescore", metavar="CSV",
                    help="re-grade an existing per_question.csv with the current parser and exit")
     p.add_argument("--check-datasets", action="store_true",
@@ -800,7 +821,9 @@ def main():
         for i, it in enumerate(items, 1):
             sys_prompt = a.system if (it["kind"] == "open" and a.system) else None
             res = ask(a.model, build_prompt(it), max_tok, a.ctx,
-                      think=a.think, system=sys_prompt)
+                      think=a.think, system=sys_prompt,
+                      repeat_penalty=a.repeat_penalty,
+                      repeat_last_n=a.repeat_last_n)
             # Reasoning either comes back in its own field or inline in the text
             answer, inline_think, unterminated = split_thinking(res["text"])
             thinking = res["thinking"] or inline_think
@@ -813,7 +836,9 @@ def main():
                 big = int(max_tok * a.retry_factor)
                 print(f"    reasoning-only at {max_tok} tokens, retrying at {big}")
                 res2 = ask(a.model, build_prompt(it), big, a.ctx,
-                           think=a.think, system=sys_prompt)
+                           think=a.think, system=sys_prompt,
+                           repeat_penalty=a.repeat_penalty,
+                           repeat_last_n=a.repeat_last_n)
                 ans2, think2, unterm2 = split_thinking(res2["text"])
                 retried = True
                 # Keep the retry only if it actually got us an answer. Either
@@ -936,6 +961,9 @@ def main():
         "datasets_failed": {k: v for k, v in load_failures.items() if k in wanted},
         "reasoning_enabled": a.think,
         "max_tokens": {"graded": a.max_tokens, "open_ended": a.max_tokens_open},
+        # Two runs with different sampling are not comparable, so say what was used.
+        "sampling": {"temperature": 0, "repeat_penalty": a.repeat_penalty,
+                     "repeat_last_n": a.repeat_last_n},
         "system_prompt": a.system,
         "open_ended_health": open_health,
         "accuracy_percent": acc,
