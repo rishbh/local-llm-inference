@@ -1,0 +1,302 @@
+/* One stylesheet, no framework. Light and dark both come from the same
+   variables, switched by the OS setting. */
+
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --line: #e4e2dd;
+  --ink: #1f1e1c;
+  --ink-soft: #6b6862;
+  --accent: #1a6b5a;
+  --on-accent: #ffffff;    /* text that sits on --accent; flips in dark mode */
+  --accent-soft: #eaf3f0;
+  --warn: #8a4b1f;
+  --warn-soft: #fdf3e9;
+  --radius: 12px;
+  --max: 720px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16161a;
+    --surface: #1e1e23;
+    --line: #32323a;
+    --ink: #eceaE6;
+    --ink-soft: #9b9892;
+    /* The dark-mode accent is light, so white text on it is unreadable. */
+    --accent: #52b79e;
+    --on-accent: #0c1c18;
+    --accent-soft: #1b2a27;
+    --warn: #e0a06a;
+    --warn-soft: #2a2119;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* The browser hides [hidden] with display:none, but any author rule that sets
+   display beats it - .gate below sets display:flex, so hiding the disclaimer
+   from JavaScript silently did nothing. Put the attribute back in charge. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* ---------------------------------------------------------------- gate --- */
+.gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+  backdrop-filter: blur(3px);
+}
+
+.gate-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.gate-card h1 { margin: 0 0 6px; font-size: 1.3rem; }
+.lede { margin: 0 0 16px; color: var(--ink-soft); }
+
+.warn-list {
+  background: var(--warn-soft);
+  border-left: 3px solid var(--warn);
+  border-radius: 0 8px 8px 0;
+  margin: 0 0 20px;
+  padding: 14px 16px 14px 32px;
+  font-size: .93rem;
+}
+.warn-list li + li { margin-top: 9px; }
+
+.check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: .95rem; }
+.check input { margin-top: 5px; flex: none; }
+
+.code-row { margin-top: 16px; }
+.code-row label { display: block; font-size: .85rem; color: var(--ink-soft); margin-bottom: 5px; }
+
+input[type=password] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+#enter {
+  margin-top: 20px;
+  width: 100%;
+  padding: 11px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+#enter:disabled { opacity: .4; cursor: not-allowed; }
+
+.gate-error { color: #c0392b; font-size: .9rem; margin: 12px 0 0; }
+
+/* -------------------------------------------------------------- header --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.brand { display: flex; align-items: center; gap: 9px; }
+
+.dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  flex: none;
+}
+.dot.up { background: #2ea043; }
+.dot.down { background: #c0392b; }
+
+.tag {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.model { font-size: .8rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* -------------------------------------------------------------- thread --- */
+main { flex: 1; overflow-y: auto; }
+
+.thread {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 28px 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.intro h2 { margin: 0 0 6px; font-size: 1.25rem; }
+.intro p { margin: 0 0 18px; color: var(--ink-soft); }
+
+.examples { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+.eg {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: .88rem;
+  cursor: pointer;
+  text-align: left;
+}
+.eg:hover { border-color: var(--accent); color: var(--accent); }
+
+.turn { display: flex; flex-direction: column; gap: 10px; }
+
+.q {
+  align-self: flex-end;
+  max-width: 85%;
+  background: var(--accent);
+  color: var(--on-accent);
+  padding: 10px 15px;
+  border-radius: 16px 16px 3px 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.a {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px 16px 16px 16px;
+  padding: 15px 17px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.a.err { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+
+.a .meta {
+  display: block;
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-size: .76rem;
+  color: var(--ink-soft);
+  white-space: normal;
+}
+
+.waiting { color: var(--ink-soft); font-size: .9rem; display: flex; align-items: center; gap: 9px; }
+
+.spinner {
+  width: 13px; height: 13px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.caret::after {
+  content: "▍";
+  color: var(--accent);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* -------------------------------------------------------------- footer --- */
+footer {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding: 12px 20px 10px;
+}
+
+#composer {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+}
+
+textarea {
+  flex: 1;
+  resize: none;
+  max-height: 160px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.5;
+}
+textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+#send {
+  border: 0;
+  border-radius: 20px;
+  padding: 11px 20px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+}
+#send:disabled { opacity: .4; cursor: not-allowed; }
+
+.footnote {
+  max-width: var(--max);
+  margin: 8px auto 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .75rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .footnote { flex-direction: column-reverse; gap: 3px; }
+  .gate-card { padding: 22px 18px; }
+  /* Keep the title on one line rather than letting it stack above the tag. */
+  header { padding: 10px 14px; }
+  .brand { gap: 7px; font-size: .95rem; white-space: nowrap; }
+  .tag { font-size: .62rem; padding: 2px 6px; }
+  .model { font-size: .72rem; }
+  .thread { padding: 20px 14px 8px; }
+  .q, .a { max-width: 100%; }
+  footer { padding: 10px 14px 8px; }
+}

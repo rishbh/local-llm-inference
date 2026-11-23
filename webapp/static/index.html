@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Health Questions — test build</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- Shown once, before anything else. Dismissing it is the consent step. -->
+<div id="gate" class="gate" hidden>
+  <div class="gate-card">
+    <h1>Before you start</h1>
+    <p class="lede">This is an <strong>experimental test build</strong>, not a
+      medical service.</p>
+    <ul class="warn-list">
+      <li><strong>This is not medical advice.</strong> A small AI model writes
+        the answers. In our own testing it got roughly 4 in 10 answers right
+        and was confidently wrong on the rest, including inventing drug and
+        gene names that do not exist.</li>
+      <li><strong>Do not use it for a real decision</strong> about your health
+        or anyone else's. Ask a doctor.</li>
+      <li><strong>In an emergency, stop and call 112</strong> (or your local
+        emergency number). Do not type it here and wait.</li>
+      <li><strong>Do not enter personal details</strong> — no names, phone
+        numbers, addresses, or anything identifying you or a patient.</li>
+    </ul>
+    <label class="check">
+      <input type="checkbox" id="agree">
+      <span>I understand this is a test and not medical advice.</span>
+    </label>
+    <div id="code-row" class="code-row" hidden>
+      <label for="code">Access code</label>
+      <input type="password" id="code" autocomplete="off" placeholder="given to you by the tester">
+    </div>
+    <button id="enter" disabled>Continue</button>
+    <p id="gate-error" class="gate-error" hidden></p>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <span class="dot" id="status-dot" title="checking..."></span>
+    <strong>Health Questions</strong>
+    <span class="tag">test build</span>
+  </div>
+  <div class="model" id="model-name"></div>
+</header>
+
+<main>
+  <div id="thread" class="thread">
+    <div class="intro">
+      <h2>Ask a general health question</h2>
+      <p>Answers come from a small medical model running on a personal computer,
+         so they take about half a minute and can be wrong.</p>
+      <div class="examples">
+        <button class="eg">What causes a sore throat that lasts two weeks?</button>
+        <button class="eg">What are the early signs of type 2 diabetes?</button>
+        <button class="eg">How is high blood pressure usually treated?</button>
+        <button class="eg">When is a headache a reason to go to hospital?</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <form id="composer" autocomplete="off">
+    <textarea id="q" rows="1" maxlength="500"
+              placeholder="Ask a health question"></textarea>
+    <button id="send" type="submit" title="Ask">Ask</button>
+  </form>
+  <div class="footnote">
+    <span id="counter">0 / 500</span>
+    <span>Not medical advice · In an emergency call 112</span>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

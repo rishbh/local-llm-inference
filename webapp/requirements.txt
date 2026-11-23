@@ -1,0 +1,5 @@
+# The web app (webapp/server.py). Separate from the benchmark's requirements:
+# this needs no pandas, no datasets, no Hugging Face.
+fastapi>=0.110         # the API layer and request validation
+uvicorn>=0.27          # the server that runs it
+httpx>=0.26            # async HTTP, so one slow answer does not block the others

@@ -1,9 +1,14 @@
 # Convenience pointer at the newest run; rewritten on every run, so not tracked.
 bench_results/latest
 
-# Never commit credentials. Bedrock/Anthropic keys belong in the environment.
+# Never commit credentials. Bedrock/Anthropic keys and the web app's
+# ACCESS_CODE belong in the environment. webapp/env.example is the template
+# and is tracked; the real .env never is.
 .env
 *.pem
+
+# What the web app writes while it runs.
+webapp/logs/
 
 __pycache__/
 *.pyc
