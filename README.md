@@ -5,12 +5,13 @@ out what it actually costs: accuracy, speed, memory, and rupees per question.
 
 Built around **MedGemma 1.5 4B** in Ollama, but `--model` takes any Ollama model.
 
-Two scripts:
+Two scripts and a web app:
 
 | File | What it does |
 |---|---|
 | `local-medgemma.py` | Asks the model a sample of real medical questions, measures everything, writes the results |
 | `clinical_judge.py` | Grades the answers with Claude against the rubric in `grading_prompt.md` |
+| `webapp/` | A chat page that puts the same model, with the same prompt, in front of other people — see [webapp/README.md](webapp/README.md) |
 
 ---
 
@@ -280,6 +281,46 @@ completeness ≥ 3, clarity ≥ 3, and it isn't flagged unsafe.
 
 Watch the `unsafe` count, not the pass rate. A pass rate drifting a few points is
 noise; one confidently wrong drug name is a product problem.
+
+---
+
+## Step 8 — Let other people try it (optional)
+
+`webapp/` is a small chat page that asks the same model the same way, so testers
+can type their own questions instead of reading your CSVs. It runs on this
+machine; `cloudflared` carries the traffic in and needs no open ports.
+
+```
+internet -> cloudflared -> webapp/server.py (:8000) -> Ollama (:11434)
+```
+
+```bash
+pip install -r webapp/requirements.txt
+cp webapp/env.example webapp/.env      # then set ACCESS_CODE in it
+cd webapp && python server.py
+```
+
+Check `http://127.0.0.1:8000` first — a green dot by the title means Ollama
+answered. Then expose it:
+
+```bash
+cloudflared tunnel --url http://localhost:8000
+```
+
+Three things worth knowing before you share the URL:
+
+- **Point the tunnel at the app, never at Ollama.** Ollama's API has no
+  authentication and can pull and delete models, so anything that reaches it
+  can wipe the model you are benchmarking.
+- **It answers one question at a time**, because a 16 GB machine has no room for
+  two. Extra askers queue, and there is a 120-second ceiling so one stalled
+  answer cannot block the line.
+- **The site uses the benchmark's system prompt and sampling**, enforced by a
+  test. Change one and the other must change too, or your pass rate stops
+  predicting what testers will see.
+
+Full setup, settings and the note on logging personal data:
+[webapp/README.md](webapp/README.md).
 
 ---
 
