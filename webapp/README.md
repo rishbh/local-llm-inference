@@ -40,44 +40,133 @@ wipe your model. The only thing exposed here is "ask one question".
 
 ---
 
-## Run it
+## How many terminals
 
-**1. Install the dependencies** (separate from the benchmark's — no pandas here):
+**There is no separate frontend server.** One Python process serves both the
+page and the API, so this needs two terminals, not three.
+
+| | What | Terminal |
+|---|---|---|
+| 1 | Ollama — the model | usually already running |
+| 2 | This app — page **and** API | one terminal |
+| 3 | `cloudflared` — only to share it | one terminal |
+
+---
+
+## Setup (once)
+
+```bash
+cd ~/Me-work/github/local-llm-inference
+```
 
 ```bash
 pip install -r webapp/requirements.txt
 ```
 
-**2. Make your settings file:**
+These are separate from the benchmark's requirements — no pandas, no datasets.
 
 ```bash
 cp webapp/env.example webapp/.env
 ```
 
-Open `webapp/.env` and set `ACCESS_CODE` to anything you like. Leave it empty
-and anyone who learns the URL can use the site.
+Open `webapp/.env` in a text editor and set a code:
 
-**3. Start it** (Ollama must already be running):
-
-```bash
-cd webapp && python server.py
+```
+ACCESS_CODE=pick-something-here
 ```
 
-Open http://127.0.0.1:8000. If the dot next to the title is green, the model is
-reachable. Red means Ollama is down or the model isn't pulled — hover for the
-reason.
+Leave it empty and anyone who learns the URL can use the site. You only do this
+part once.
 
-**4. Put it on the internet:**
+---
+
+## Terminal 1 — Ollama
+
+If the Ollama app is already running in your system tray, skip this. To check:
+
+```bash
+curl http://localhost:11434/api/tags
+```
+
+JSON listing your models means it is running. Nothing back means it is not:
+
+```bash
+ollama serve
+```
+
+Leave it open.
+
+---
+
+## Terminal 2 — this app
+
+```bash
+cd ~/Me-work/github/local-llm-inference/webapp
+```
+
+```bash
+python server.py
+```
+
+You should see:
+
+```
+  model      medgemma1.5 via http://127.0.0.1:11434
+  listening  http://127.0.0.1:8000
+  queue      1 at a time, 8 waiting, 120s ceiling
+  access     code required (19 characters)
+
+  ok: medgemma1.5 ready
+```
+
+If that last line says `PROBLEM` instead, Ollama is not up or the model is not
+pulled — the message says which. Leave this terminal open.
+
+### Check it locally before going further
+
+Open **http://127.0.0.1:8000**.
+
+1. The disclaimer appears — tick the box, type your access code, click Continue
+2. Click one of the example questions
+3. Text should start appearing within a few seconds and keep flowing
+
+A **green dot** beside the title means the model is reachable; red means it is
+not, and hovering gives the reason. If this does not work, a tunnel will not
+fix it — fix it here first.
+
+---
+
+## Terminal 3 — the tunnel (only when sharing)
 
 ```bash
 cloudflared tunnel --url http://localhost:8000
 ```
 
-Share the `https://….trycloudflare.com` URL and the access code. Closing that
-terminal takes the site down.
+It prints a `https://….trycloudflare.com` URL. Give that **and the access
+code** to your testers. Closing this terminal takes the site down, and the URL
+is different next time.
 
-Note there is no `--http-host-header` flag this time. That was only needed
-because Ollama checks the hostname; this app doesn't.
+There is no `--http-host-header` flag this time. That was only needed because
+Ollama checks the hostname; this app does not.
+
+---
+
+## Stopping
+
+`Ctrl+C` in each terminal, in any order.
+
+---
+
+## What to expect on the real model
+
+| | |
+|---|---|
+| Time per answer | about 26 s, streaming throughout |
+| Someone asking while you are | sees "1 question ahead of you" |
+| Nothing within 45 s | memory warning — the ceiling working, not a crash |
+
+That last one is worth taking seriously: the benchmark peaked at 16.78 GB of
+16.9 GB. Close the browser's other tabs and anything heavy before a session.
 
 ---
 

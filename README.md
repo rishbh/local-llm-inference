@@ -294,6 +294,18 @@ machine; `cloudflared` carries the traffic in and needs no open ports.
 internet -> cloudflared -> webapp/server.py (:8000) -> Ollama (:11434)
 ```
 
+It needs **two terminals, not three** — one process serves both the page and the
+API, so there is no separate frontend server to start.
+
+| | What | Terminal |
+|---|---|---|
+| 1 | Ollama — the model | usually already running |
+| 2 | `webapp/server.py` — page **and** API | one terminal |
+| 3 | `cloudflared` — only to share it | one terminal |
+
+The terminal-by-terminal walkthrough, with what each one should print, is in
+**[webapp/README.md](webapp/README.md)**. The short version:
+
 ```bash
 pip install -r webapp/requirements.txt
 cp webapp/env.example webapp/.env      # then set ACCESS_CODE in it
@@ -301,7 +313,7 @@ cd webapp && python server.py
 ```
 
 Check `http://127.0.0.1:8000` first — a green dot by the title means Ollama
-answered. Then expose it:
+answered. If it doesn't work here, a tunnel won't fix it. Then expose it:
 
 ```bash
 cloudflared tunnel --url http://localhost:8000
