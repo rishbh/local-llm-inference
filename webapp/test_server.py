@@ -64,7 +64,21 @@ o = p["options"]
 assert o["temperature"] == 0, o
 assert o["repeat_penalty"] == 1.1 and o["repeat_last_n"] == 256, o
 assert o["num_predict"] == 1600 and o["num_ctx"] == 4096, o
+assert "images" not in p["messages"][1], p["messages"]
 ok("the request to Ollama carries the benchmark's sampling settings")
+
+
+# --------------------------------------------------------------------------- #
+# 2b. an image rides in the user message, and only then does the prompt grow
+# --------------------------------------------------------------------------- #
+pi = ollama_client.build_payload("what is this?", image_b64="QUJD")
+assert pi["messages"][1]["images"] == ["QUJD"], pi["messages"]
+assert pi["messages"][0]["content"].startswith(config.SYSTEM_PROMPT), "prompt replaced"
+assert config.IMAGE_NOTE in pi["messages"][0]["content"], "image note missing"
+# The text-only path must stay exactly what the benchmark measured.
+assert p["messages"][0]["content"] == config.SYSTEM_PROMPT, "text prompt grew"
+assert pi["options"] == p["options"], "sampling differs when an image is sent"
+ok("an image is attached to the user message and only then is IMAGE_NOTE added")
 
 
 # --------------------------------------------------------------------------- #
@@ -121,9 +135,13 @@ class FakeStream:
             yield line
 
 
-def fake_client(lines, status=200):
+def fake_client(lines, status=200, vision=False):
     class C:
-        def stream(self, method, url, json=None): return FakeStream(lines, status)
+        sent = []               # every payload Ollama was asked to answer
+
+        def stream(self, method, url, json=None):
+            C.sent.append(json)
+            return FakeStream(lines, status)
 
         async def get(self, url, timeout=None):
             class R:
@@ -131,6 +149,16 @@ def fake_client(lines, status=200):
                 def raise_for_status(self): pass
                 def json(self): return {"models": [{"name": config.MODEL}]}
             return R()
+
+        async def post(self, url, json=None, timeout=None):
+            class R:
+                status_code = 200
+                def raise_for_status(self): pass
+                def json(self):
+                    return {"capabilities": ["completion"] +
+                            (["vision"] if vision else [])}
+            return R()
+    C.sent = []
     return C()
 
 
@@ -247,7 +275,9 @@ with TestClient(server.app) as c:
     page = c.get("/")
     assert page.status_code == 200
     body = page.text
-    for needed in ["not medical advice", "112", "experimental", "agree"]:
+    for needed in ["not medical advice", "112", "experimental", "agree",
+                   # the photo warning, and the upload control it refers to
+                   "be careful with photos", 'id="attach"']:
         assert needed.lower() in body.lower(), f"page is missing {needed!r}"
     assert c.get("/app.js").status_code == 200
     assert c.get("/style.css").status_code == 200
@@ -260,6 +290,101 @@ with TestClient(server.app) as c:
     msgs = read_ndjson(c.post("/api/ask", json={"question": "anything"}))
 assert any(m["type"] == "error" and "model not found" in m["message"] for m in msgs), msgs
 ok("an error from Ollama reaches the page instead of being swallowed")
+
+
+# ---- 13. only real PNG / JPEG / WebP bytes are accepted ------------------
+PNG_1PX = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQ"
+           "DwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
+import base64 as _b64                # noqa: E402
+
+assert server.sniff_image(_b64.b64decode(PNG_1PX)) == "png"
+assert server.sniff_image(b"\xff\xd8\xff\xe0 jfif") == "jpeg"
+assert server.sniff_image(b"RIFF\x00\x00\x00\x00WEBPVP8 ") == "webp"
+# The things an upload field actually gets handed
+assert server.sniff_image(b"GIF89a") is None            # wrong image format
+assert server.sniff_image(b"%PDF-1.4") is None          # a document
+assert server.sniff_image(b"MZ\x90\x00") is None        # a Windows executable
+assert server.sniff_image(b"<svg xmlns=") is None       # scriptable, so refused
+assert server.sniff_image(b"") is None
+ok("images are identified by their bytes, so a renamed file is still refused")
+
+
+# ---- 14. an attached image reaches Ollama ---------------------------------
+config.ACCESS_CODE = ""
+server._vision = True
+fc = fake_client(chat_lines(["A ", "rash."]))
+server._client = fc
+with TestClient(server.app) as c:
+    r = c.post("/api/ask", json={"question": "what is this?", "image": PNG_1PX})
+    assert r.status_code == 200, r.text
+    assert "".join(m.get("text", "") for m in read_ndjson(r)) == "A rash."
+sent = fc.sent[-1]
+assert sent["messages"][1]["images"], list(sent["messages"][1])
+assert _b64.b64decode(sent["messages"][1]["images"][0])[:8] == b"\x89PNG\r\n\x1a\n"
+assert config.IMAGE_NOTE in sent["messages"][0]["content"]
+ok("an attached image is forwarded to Ollama with the image note")
+
+
+# ---- 15. an image with no question still asks something -------------------
+fc = fake_client(chat_lines(["ok"]))
+server._client = fc
+with TestClient(server.app) as c:
+    r = c.post("/api/ask", json={"question": "", "image": PNG_1PX})
+    assert r.status_code == 200, r.text
+assert fc.sent[-1]["messages"][1]["content"].strip(), "empty question reached the model"
+ok("an image with no words still sends the model a question")
+
+
+# ---- 16. junk, corrupt and oversized uploads are refused ------------------
+server._client = fake_client(chat_lines(["x"]))
+with TestClient(server.app) as c:
+    # not an image at all
+    bad = c.post("/api/ask", json={"question": "q", "image":
+                                   _b64.b64encode(b"%PDF-1.4 hello").decode()})
+    assert bad.status_code == 400, (bad.status_code, bad.text)
+    # not even valid base64
+    broken = c.post("/api/ask", json={"question": "q", "image": "!!!not base64!!!"})
+    assert broken.status_code == 400, broken.status_code
+    # past the size ceiling: stopped by the body-size middleware, before
+    # FastAPI parses several megabytes of JSON on a 16 GB machine
+    huge = c.post("/api/ask", json={"question": "q",
+                                    "image": "A" * (config.MAX_IMAGE_BYTES * 2)})
+    assert huge.status_code == 413, huge.status_code
+
+# ...and decode_image refuses an oversized image on its own, so the ceiling
+# does not depend on the middleware alone.
+try:
+    server.decode_image("A" * (config.MAX_IMAGE_BYTES * 2))
+    raise AssertionError("decode_image accepted an oversized image")
+except Exception as e:
+    assert getattr(e, "status_code", None) == 413, e
+ok("junk, corrupt and oversized uploads are refused with a clear status")
+
+
+# ---- 17. a model with no vision encoder refuses images --------------------
+server._vision = False
+server._client = fake_client(chat_lines(["x"]))
+with TestClient(server.app) as c:
+    blocked = c.post("/api/ask", json={"question": "q", "image": PNG_1PX})
+    assert blocked.status_code == 400, blocked.status_code
+    assert "cannot read images" in blocked.json()["detail"], blocked.text
+    # text still works perfectly well
+    assert c.post("/api/ask", json={"question": "q"}).status_code == 200
+ok("a text-only model refuses an image instead of failing deep inside Ollama")
+
+
+# ---- 18. health tells the page whether to show the upload button ----------
+server._vision = None
+server._client = fake_client([], vision=True)
+with TestClient(server.app) as c:
+    assert c.get("/api/health").json()["images"] is True
+
+server._vision = None
+server._client = fake_client([], vision=False)
+with TestClient(server.app) as c:
+    h = c.get("/api/health").json()
+assert h["images"] is False and h["max_image_mb"] >= 1, h
+ok("/api/health reports whether the installed model can actually see")
 
 
 print("\n%d/%d CHECKS PASSED" % (len(PASSED), len(PASSED)))

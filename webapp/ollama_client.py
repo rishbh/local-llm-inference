@@ -76,13 +76,25 @@ class ThinkingStripper:
         return ""
 
 
-def build_payload(question, system_prompt=None):
-    """The request body sent to Ollama, kept in one place so it is testable."""
+def build_payload(question, system_prompt=None, image_b64=None):
+    """The request body sent to Ollama, kept in one place so it is testable.
+
+    `image_b64` is base64 of the raw file bytes with no `data:` prefix, which
+    is the only form Ollama's `images` field accepts. When one is present the
+    system prompt grows by IMAGE_NOTE; without one the prompt is byte-identical
+    to the benchmark's, so the measured path stays the measured path.
+    """
+    system = system_prompt or config.SYSTEM_PROMPT
+    user = {"role": "user", "content": question}
+    if image_b64:
+        system = system + config.IMAGE_NOTE
+        user["images"] = [image_b64]
+
     return {
         "model": config.MODEL,
         "messages": [
-            {"role": "system", "content": system_prompt or config.SYSTEM_PROMPT},
-            {"role": "user", "content": question},
+            {"role": "system", "content": system},
+            user,
         ],
         "stream": True,
         "think": False,
@@ -96,13 +108,13 @@ def build_payload(question, system_prompt=None):
     }
 
 
-async def stream_answer(client, question, system_prompt=None):
+async def stream_answer(client, question, system_prompt=None, image_b64=None):
     """Yield ("delta", text) as the answer arrives, then ("done", info).
 
     Raises OllamaError if Ollama is unreachable or rejects the request.
     """
     stripper = ThinkingStripper()
-    payload = build_payload(question, system_prompt)
+    payload = build_payload(question, system_prompt, image_b64)
 
     try:
         async with client.stream("POST", f"{config.OLLAMA_URL}/api/chat",
@@ -167,3 +179,24 @@ async def check_health(client):
         return False, (f"Ollama is running but '{config.MODEL}' is not pulled. "
                        f"Installed: {', '.join(names) or 'nothing'}")
     return True, f"{config.MODEL} ready"
+
+
+async def has_vision(client):
+    """True if Ollama says this model can accept images.
+
+    Asked rather than assumed. MedGemma 4B ships a vision encoder and the 27B
+    text model does not, and a quantisation can be built either way, so the
+    only honest answer comes from the model that is actually installed. An
+    older Ollama that does not report capabilities at all answers False, which
+    hides the upload button rather than offering something that would fail.
+    """
+    if not config.ALLOW_IMAGES:
+        return False
+    try:
+        r = await client.post(f"{config.OLLAMA_URL}/api/show",
+                              json={"model": config.MODEL}, timeout=10.0)
+        r.raise_for_status()
+        caps = r.json().get("capabilities") or []
+    except Exception:
+        return False
+    return "vision" in [str(c).lower() for c in caps]

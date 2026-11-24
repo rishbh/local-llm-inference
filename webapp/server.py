@@ -13,12 +13,15 @@ thing reachable from the internet is "ask one question".
 Run it with:  python -m uvicorn server:app --host 127.0.0.1 --port 8000
 """
 import asyncio
+import base64
+import binascii
 import collections
 import hashlib
 import json
 import os
 import secrets
 import time
+import typing
 
 import httpx
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -49,9 +52,17 @@ _hits = collections.defaultdict(collections.deque)
 _client = None
 _owns_client = False
 
+# None until Ollama has been asked whether this model can see. Left as None if
+# Ollama was down at startup, so /api/health retries rather than reporting
+# "no vision" for the rest of the process's life.
+_vision = None
+
 
 class Ask(BaseModel):
     question: str
+    # Base64 of the raw file bytes, no "data:" prefix. The page strips the
+    # prefix and shrinks the picture before it gets here.
+    image: typing.Optional[str] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -84,6 +95,61 @@ def rate_limited(who):
     return False
 
 
+def sniff_image(raw):
+    """Return "png" / "jpeg" / "webp", or None if these bytes are not one.
+
+    The browser's declared type is not consulted. An upload field is the one
+    place where a stranger hands this machine arbitrary bytes, and a file
+    called `x.png` is a .png only if it starts like one.
+    """
+    if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if raw.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def decode_image(b64):
+    """Validate a base64 image and return (clean_base64, bytes, kind).
+
+    Raises HTTPException with a message meant for a person, not a log.
+    """
+    b64 = (b64 or "").strip()
+    if b64.startswith("data:"):
+        _, _, b64 = b64.partition(",")      # tolerate a pasted data URL
+
+    # Checked before decoding: 4 MB of base64 is cheap to measure and
+    # expensive to decode, and the whole point is not to do the expensive part.
+    if len(b64) * 3 // 4 > config.MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"That image is too big. The limit is "
+                   f"{config.MAX_IMAGE_BYTES // (1024 * 1024)} MB.")
+
+    try:
+        raw = base64.b64decode(b64, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=400, detail="That image did not upload properly.")
+
+    if len(raw) > config.MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"That image is too big. The limit is "
+                   f"{config.MAX_IMAGE_BYTES // (1024 * 1024)} MB.")
+
+    kind = sniff_image(raw)
+    if kind not in config.ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PNG, JPEG and WebP images can be read.")
+
+    # Re-encoded from the bytes that were actually checked, so whitespace or
+    # odd padding in the request cannot reach Ollama.
+    return base64.b64encode(raw).decode("ascii"), raw, kind
+
+
 def log_event(**fields):
     """Append one line to the request log.
 
@@ -102,6 +168,32 @@ def log_event(**fields):
 def sse(obj):
     """One newline-delimited JSON message. The page reads these as they land."""
     return json.dumps(obj, ensure_ascii=False) + "\n"
+
+
+# --------------------------------------------------------------------------- #
+# middleware
+# --------------------------------------------------------------------------- #
+# Headroom over MAX_IMAGE_BYTES for base64's 33% overhead and the JSON around
+# it. Computed once rather than per request.
+_MAX_BODY = int(config.MAX_IMAGE_BYTES * 1.4) + 64 * 1024
+
+
+@app.middleware("http")
+async def limit_body(request, call_next):
+    """Refuse an oversized body before anything is read or parsed.
+
+    FastAPI parses the whole JSON body into memory before the handler - and so
+    before the access code is checked. Without this, a stranger who merely
+    knows the URL could make a 16 GB machine buffer 100 MB bodies all day. The
+    declared length is enough: a request that lies about it fails later anyway.
+    """
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > _MAX_BODY:
+        return JSONResponse(
+            {"detail": f"That request is too large. Images are limited to "
+                       f"{config.MAX_IMAGE_BYTES // (1024 * 1024)} MB."},
+            status_code=413)
+    return await call_next(request)
 
 
 # --------------------------------------------------------------------------- #
@@ -134,7 +226,22 @@ async def startup():
     print()
 
     ok, msg = await ollama_client.check_health(_client)
-    print(f"  {'ok' if ok else 'PROBLEM'}: {msg}\n")
+    print(f"  {'ok' if ok else 'PROBLEM'}: {msg}")
+
+    global _vision
+    # Only asked if nothing has already answered it, so a test that injects a
+    # capability is not overwritten on the way up.
+    if ok:
+        if _vision is None:
+            _vision = await ollama_client.has_vision(_client)
+        if _vision:
+            print(f"  images     on, up to "
+                  f"{config.MAX_IMAGE_BYTES // (1024 * 1024)} MB "
+                  f"({', '.join(config.ALLOWED_IMAGE_TYPES)})")
+        elif config.ALLOW_IMAGES:
+            print(f"  images     off - {config.MODEL} does not report a vision "
+                  f"capability")
+    print()
 
 
 @app.on_event("shutdown")
@@ -150,10 +257,17 @@ async def shutdown():
 # --------------------------------------------------------------------------- #
 @app.get("/api/health")
 async def health():
+    global _vision
     ok, msg = await ollama_client.check_health(_client)
+    if ok and _vision is None:
+        _vision = await ollama_client.has_vision(_client)
     return JSONResponse(
         {"ok": ok, "detail": msg, "model": config.MODEL,
-         "needs_code": bool(config.ACCESS_CODE), "busy": _waiting},
+         "needs_code": bool(config.ACCESS_CODE), "busy": _waiting,
+         # The page uses this to decide whether to show the upload button at
+         # all, so a text-only model never offers something that would fail.
+         "images": bool(ok and _vision),
+         "max_image_mb": config.MAX_IMAGE_BYTES // (1024 * 1024)},
         status_code=200 if ok else 503)
 
 
@@ -166,12 +280,27 @@ async def ask(body: Ask, request: Request, x_access_code: str = Header(default="
         raise HTTPException(status_code=401, detail="Wrong or missing access code.")
 
     question = (body.question or "").strip()
-    if not question:
+    if not question and not body.image:
         raise HTTPException(status_code=400, detail="Please type a question.")
     if len(question) > config.MAX_QUESTION_CHARS:
         raise HTTPException(
             status_code=400,
             detail=f"Please keep it under {config.MAX_QUESTION_CHARS} characters.")
+
+    image_b64, image_bytes = None, 0
+    if body.image:
+        if not config.ALLOW_IMAGES:
+            raise HTTPException(status_code=400, detail="Images are turned off here.")
+        if not _vision:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{config.MODEL} cannot read images.")
+        image_b64, raw, _kind = decode_image(body.image)
+        image_bytes = len(raw)
+        if not question:
+            # An image with no words is a real thing people do. Asking nothing
+            # is not, so give the model the question they meant.
+            question = "What can you tell me about this image?"
 
     who = caller_id(request)
     if rate_limited(who):
@@ -189,12 +318,12 @@ async def ask(body: Ask, request: Request, x_access_code: str = Header(default="
         position = _waiting
 
     return StreamingResponse(
-        _answer(question, who, position),
+        _answer(question, who, position, image_b64, image_bytes),
         media_type="application/x-ndjson",
         headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
-async def _answer(question, who, position):
+async def _answer(question, who, position, image_b64=None, image_bytes=0):
     """Wait for a slot, then stream the answer. Always releases the slot."""
     global _waiting
     started = time.monotonic()
@@ -206,15 +335,22 @@ async def _answer(question, who, position):
         if position > config.MAX_CONCURRENT:
             yield sse({"type": "queued", "position": position - config.MAX_CONCURRENT})
 
+        # Encoding the picture happens before any text comes back, so both
+        # budgets stretch when there is one.
+        slow = config.IMAGE_TIMEOUT_FACTOR if image_b64 else 1.0
+        first_budget = config.FIRST_TOKEN_TIMEOUT_S * slow
+        total_budget = config.ANSWER_TIMEOUT_S * slow
+
         async with _slots:
             yield sse({"type": "start"})
             first_token_at = None
-            stream = ollama_client.stream_answer(_client, question)
+            stream = ollama_client.stream_answer(_client, question,
+                                                 image_b64=image_b64)
 
             try:
                 while True:
-                    budget = (config.FIRST_TOKEN_TIMEOUT_S if first_token_at is None
-                              else config.ANSWER_TIMEOUT_S - (time.monotonic() - started))
+                    budget = (first_budget if first_token_at is None
+                              else total_budget - (time.monotonic() - started))
                     if budget <= 0:
                         raise asyncio.TimeoutError()
 
@@ -253,6 +389,9 @@ async def _answer(question, who, position):
         async with _waiting_lock:
             _waiting -= 1
         event = {"caller": who, "status": status, "question_chars": len(question),
+                 # Size only. The image itself is never written anywhere: a
+                 # photo of a person is far more identifying than their words.
+                 "image_bytes": image_bytes,
                  "output_tokens": tokens,
                  "seconds": round(time.monotonic() - started, 1)}
         if config.LOG_QUESTIONS:
