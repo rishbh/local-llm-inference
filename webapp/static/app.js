@@ -12,11 +12,23 @@
       codeRow = $("code-row"), code = $("code"), gateError = $("gate-error"),
       thread = $("thread"), composer = $("composer"), q = $("q"),
       send = $("send"), counter = $("counter"),
-      dot = $("status-dot"), modelName = $("model-name");
+      dot = $("status-dot"), modelName = $("model-name"),
+      attach = $("attach"), file = $("file"), strip = $("attach-strip"),
+      thumb = $("attach-thumb"), sizeLabel = $("attach-size"),
+      removeBtn = $("attach-remove");
 
   var accessCode = sessionStorage.getItem("accessCode") || "";
   var needsCode = false;
   var busy = false;
+
+  /* The image waiting to be sent with the next question, or null.
+   * { dataUrl: "data:image/jpeg;base64,...", b64: "...", bytes: 12345 } */
+  var pending = null;
+
+  /* The vision encoder works at 896px, so anything larger is uploaded and
+   * then thrown away. 1024 leaves a margin without wasting a phone's upload. */
+  var MAX_PX = 1024;
+  var maxMb = 4;              /* replaced by whatever /api/health reports */
 
   /* ------------------------------------------------------------- gate --- */
   function showGate() {
@@ -50,6 +62,10 @@
       dot.className = "dot " + (h.ok ? "up" : "down");
       dot.title = h.detail;
       modelName.textContent = h.model;
+      /* The button appears only if the backend confirmed this model can read
+       * images, so a text-only model never offers an upload that would 400. */
+      attach.hidden = !h.images;
+      if (h.max_image_mb) maxMb = h.max_image_mb;
       if (!h.ok) addError(h.detail);
       if (!localStorage.getItem("acceptedDisclaimer") || (needsCode && !accessCode)) {
         showGate();
@@ -85,13 +101,100 @@
     });
   });
 
+  /* --------------------------------------------------------- picture --- */
+  /* Shrink in the browser rather than on the server, for three reasons: a
+   * 12 MP phone photo takes forever to upload over a home tunnel, the model
+   * throws away everything above 896px anyway, and re-encoding through a
+   * canvas drops the EXIF block - which is where a phone writes the GPS
+   * coordinates of where the picture was taken. */
+  function shrink(f, cb) {
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) { cb(new Error("That file is not an image this page can read.")); return; }
+
+      var scale = Math.min(1, MAX_PX / Math.max(w, h));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      try {
+        cb(null, canvas.toDataURL("image/jpeg", 0.85));
+      } catch (err) {
+        cb(new Error("That image could not be prepared for upload."));
+      }
+    };
+
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      cb(new Error("That file is not an image this page can read."));
+    };
+
+    img.src = url;
+  }
+
+  function showPending() {
+    strip.hidden = !pending;
+    attach.classList.toggle("on", !!pending);
+    if (pending) {
+      thumb.src = pending.dataUrl;
+      sizeLabel.textContent = (pending.bytes / 1024).toFixed(0) + " KB, resized";
+    }
+  }
+
+  function clearPending() {
+    pending = null;
+    file.value = "";              /* so picking the same file again still fires */
+    thumb.removeAttribute("src");
+    showPending();
+  }
+
+  attach.addEventListener("click", function () { if (!busy) file.click(); });
+
+  removeBtn.addEventListener("click", clearPending);
+
+  file.addEventListener("change", function () {
+    var f = file.files && file.files[0];
+    if (!f) return;
+
+    /* Checked before reading it: the resize below has to decode the whole
+     * thing into memory, and a 60 MB file would do that on the user's phone. */
+    if (f.size > maxMb * 1024 * 1024 * 4) {
+      addError("That image is far too large. Pick one under " + maxMb + " MB.");
+      clearPending();
+      return;
+    }
+
+    shrink(f, function (err, dataUrl) {
+      if (err) { addError(err.message); clearPending(); return; }
+      var b64 = dataUrl.split(",")[1] || "";
+      var bytes = Math.round(b64.length * 3 / 4);
+      if (bytes > maxMb * 1024 * 1024) {
+        addError("That image is still over " + maxMb + " MB after resizing.");
+        clearPending();
+        return;
+      }
+      pending = { dataUrl: dataUrl, b64: b64, bytes: bytes };
+      showPending();
+      q.focus();
+    });
+  });
+
   composer.addEventListener("submit", function (e) {
     e.preventDefault();
     var text = q.value.trim();
-    if (!text || busy) return;
+    /* An image on its own is a legitimate question; the backend supplies the
+     * words. Nothing at all is not. */
+    if ((!text && !pending) || busy) return;
+    var image = pending;
     q.value = "";
+    clearPending();
     autosize();
-    ask(text);
+    ask(text, image);
   });
 
   /* ------------------------------------------------------------- view --- */
@@ -124,19 +227,34 @@
     busy = on;
     send.disabled = on;
     q.disabled = on;
+    attach.disabled = on;
   }
 
   /* -------------------------------------------------------------- ask --- */
-  function ask(question) {
+  function ask(question, image) {
     dropIntro();
     setBusy(true);
 
     var turn = el("div", "turn");
-    turn.appendChild(el("div", "q", question));
+    var bubble = el("div", "q");
+    if (image) {
+      /* A copy in the thread, so the conversation still reads correctly once
+       * the composer has been cleared. */
+      var shown = document.createElement("img");
+      shown.src = image.dataUrl;
+      shown.alt = "the image you attached";
+      bubble.appendChild(shown);
+    }
+    bubble.appendChild(document.createTextNode(
+      question || "(no question - just this image)"));
+    turn.appendChild(bubble);
 
     var status = el("div", "waiting");
     status.appendChild(el("div", "spinner"));
-    status.appendChild(el("span", null, "Thinking…"));
+    /* Reading a picture on a CPU takes a good while before any text appears,
+     * so say so rather than letting it look stuck. */
+    status.appendChild(el("span", null,
+      image ? "Reading the image… this takes longer" : "Thinking…"));
     turn.appendChild(status);
 
     thread.appendChild(turn);
@@ -151,7 +269,9 @@
         "Content-Type": "application/json",
         "X-Access-Code": accessCode
       },
-      body: JSON.stringify({ question: question })
+      body: JSON.stringify(image
+        ? { question: question, image: image.b64 }
+        : { question: question })
     }).then(function (res) {
       if (!res.ok) {
         return res.json().then(function (j) {
@@ -207,7 +327,8 @@
             : msg.position + " questions ahead of you…";
 
       } else if (msg.type === "start") {
-        status.lastChild.textContent = "Thinking…";
+        status.lastChild.textContent =
+          image ? "Reading the image… this takes longer" : "Thinking…";
 
       } else if (msg.type === "delta") {
         if (!answer) {

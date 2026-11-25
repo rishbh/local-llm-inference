@@ -93,6 +93,27 @@ RATE_LIMIT_WINDOW_S = _float("RATE_LIMIT_WINDOW_S", 600.0)
 
 MAX_QUESTION_CHARS = _int("MAX_QUESTION_CHARS", 500)
 
+# ---- Images ----------------------------------------------------------------
+# Only takes effect if the model actually has a vision encoder: /api/health
+# asks Ollama for the model's capabilities and the page hides the button when
+# "vision" is absent, so turning this on cannot make a text-only model pretend.
+ALLOW_IMAGES = _bool("ALLOW_IMAGES", True)
+
+# 4 MB of decoded image. The page shrinks anything bigger to 1024px before
+# uploading, so this ceiling is really a guard against a crafted request, not
+# against an ordinary phone photo.
+MAX_IMAGE_BYTES = _int("MAX_IMAGE_BYTES", 4 * 1024 * 1024)
+
+# Only these three. Each is checked by its magic bytes, not by what the browser
+# claims the type is.
+ALLOWED_IMAGE_TYPES = ("png", "jpeg", "webp")
+
+# Both timeouts are multiplied by this when an image is attached. Pushing a
+# picture through the vision encoder on a CPU happens *before* the first token
+# appears, so a 45 s first-token budget that is generous for text will kill an
+# image question that was going to work.
+IMAGE_TIMEOUT_FACTOR = _float("IMAGE_TIMEOUT_FACTOR", 3.0)
+
 # ---- Logging ---------------------------------------------------------------
 # OFF by default, and it must stay that way unless you have decided what you
 # are doing about consent and retention. A public health Q&A page collects
@@ -121,4 +142,15 @@ SYSTEM_PROMPT = (
     "name you are not sure of. Do not diagnose, and do not give a dose or a "
     "prescription. If the question is unclear or unsafe to answer without an "
     "examination, say so."
+)
+
+# Appended to SYSTEM_PROMPT *only* when an image is attached. Kept separate on
+# purpose: SYSTEM_PROMPT itself must stay byte-identical to the benchmark's
+# DEFAULT_SYSTEM, and the benchmark has never sent an image. A text-only
+# question therefore still gets exactly the prompt that was measured.
+IMAGE_NOTE = (
+    " An image is attached to this question. Describe only what you can "
+    "actually see in it. Do not name a diagnosis from an image. If the image "
+    "is blurred, cropped, or is not a medical image at all, say that instead "
+    "of guessing, and say that an image alone is not enough to judge this."
 )

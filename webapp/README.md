@@ -36,7 +36,7 @@ wipe your model. The only thing exposed here is "ask one question".
 | `ollama_client.py` | The only file that knows Ollama exists |
 | `config.py` | Every setting, read from the environment |
 | `static/` | The frontend: one HTML page, one stylesheet, one script |
-| `test_server.py` | 12 checks, no model or network needed |
+| `test_server.py` | 19 checks, no model or network needed |
 
 ---
 
@@ -117,10 +117,15 @@ You should see:
   access     code required (19 characters)
 
   ok: medgemma1.5 ready
+  images     on, up to 4 MB (png, jpeg, webp)
 ```
 
-If that last line says `PROBLEM` instead, Ollama is not up or the model is not
+If the `ok:` line says `PROBLEM` instead, Ollama is not up or the model is not
 pulled — the message says which. Leave this terminal open.
+
+The `images` line reports whether your installed model can read pictures. If
+it says `off`, that is the honest answer from Ollama, not a setting to
+override — see **Image questions** below.
 
 ### Check it locally before going further
 
@@ -162,11 +167,65 @@ Ollama checks the hostname; this app does not.
 | | |
 |---|---|
 | Time per answer | about 26 s, streaming throughout |
+| Time per **image** answer | much longer — the picture is encoded before any text appears |
 | Someone asking while you are | sees "1 question ahead of you" |
 | Nothing within 45 s | memory warning — the ceiling working, not a crash |
 
 That last one is worth taking seriously: the benchmark peaked at 16.78 GB of
 16.9 GB. Close the browser's other tabs and anything heavy before a session.
+
+---
+
+## Image questions
+
+MedGemma 4B ships a vision encoder, so it can be asked about a picture as well
+as about text. The upload button appears **only** if Ollama reports that your
+installed model has one. To see what yours says:
+
+```bash
+ollama show medgemma1.5
+```
+
+If `vision` is not in the capabilities list, the button stays hidden and an
+image sent by hand is refused with a plain message. `ALLOW_IMAGES=1` does not
+override that — a text-only model cannot be talked into seeing.
+
+### What happens to a picture
+
+| Step | Where | Why |
+|---|---|---|
+| Oversized request refused unread | `server.py` middleware | FastAPI parses the body *before* the access code is checked, so without this a stranger who knows the URL could make the machine buffer 100 MB bodies |
+| Shrunk to 1024px, re-encoded as JPEG | the browser | The encoder works at 896px, so anything larger is uploaded and then discarded. Re-encoding also **drops the EXIF block, which is where a phone writes GPS coordinates** |
+| Checked by its first bytes | `server.py` | A file called `x.png` is a PNG only if it starts like one. PDFs, executables and SVGs are refused |
+| Size checked before decoding | `server.py` | 4 MB of base64 is cheap to measure and expensive to decode |
+| Sent as `images: [...]` | `ollama_client.py` | Ollama's own field for this. Never a `data:` URL |
+| Size logged, image never written | `server.py` | A photo of a person is far more identifying than their words |
+
+### It will be slow
+
+Encoding the picture happens **before the first token appears**, so an image
+question on a CPU feels much slower than a text one. Both timeouts are
+multiplied by `IMAGE_TIMEOUT_FACTOR` (3) when an image is attached — 135 s to
+the first token instead of 45, 360 s overall instead of 120. The page says
+"Reading the image… this takes longer" rather than letting it look stuck.
+
+If image questions still time out, raise the factor rather than lowering the
+protection on text questions.
+
+### Two warnings
+
+**The benchmark has never sent an image.** Your 38% pass rate is a text-only
+number. `SYSTEM_PROMPT` stays byte-identical to the benchmark's
+`DEFAULT_SYSTEM`, and `IMAGE_NOTE` is appended *only* when a picture is
+attached — so the measured path stays measured, but nothing here tells you how
+well the model reads images. Assume worse than text until you have graded it.
+
+**A photo of a patient is health data.** The disclaimer asks testers not to
+include a face, a name band, or anything identifying in the frame, and the
+browser strips GPS before upload. Neither of those is consent. Under the DPDP
+rules a patient photograph is sensitive personal data, so do not collect
+images from testers for a training set without deciding that question
+properly first.
 
 ---
 
@@ -235,11 +294,18 @@ describe it to testers as anything but an experiment.
 cd webapp && python test_server.py
 ```
 
-12 checks: the prompt matches the benchmark, sampling is right, thinking
+19 checks: the prompt matches the benchmark, sampling is right, thinking
 markers never reach the browser, streaming works, the access code is enforced,
 bad input is refused, the rate limit bites, a stalled model times out, the
 queue slot is always released, health reports correctly, the page serves with
 its disclaimer, and Ollama errors surface instead of being swallowed.
 
-The first three run without FastAPI installed; the rest are skipped if it
+On images: an attached picture reaches Ollama in the `images` field with
+`IMAGE_NOTE` added, the text-only prompt does not grow, an image with no words
+still asks something, uploads are identified by their bytes so a renamed file
+is refused, corrupt and oversized uploads get a clear status, a model with no
+vision capability refuses images instead of failing deep inside Ollama, and
+health reports whether the installed model can actually see.
+
+The first four run without FastAPI installed; the rest are skipped if it
 isn't.

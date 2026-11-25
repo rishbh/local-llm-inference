@@ -330,6 +330,12 @@ Three things worth knowing before you share the URL:
 - **The site uses the benchmark's system prompt and sampling**, enforced by a
   test. Change one and the other must change too, or your pass rate stops
   predicting what testers will see.
+- **Image questions are possible but unmeasured.** If Ollama reports that your
+  model has a vision encoder, testers can attach a PNG, JPEG or WebP; the page
+  shrinks it to 1024px first, which also strips the GPS coordinates a phone
+  writes into a photo. The benchmark has never sent an image, so nothing in
+  this repo tells you how well the model reads one — and a patient photograph
+  is sensitive personal data, not test data.
 
 Full setup, settings and the note on logging personal data:
 [webapp/README.md](webapp/README.md).
